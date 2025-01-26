@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.animation import PillowWriter, FuncAnimation
 
 class Displayer:
