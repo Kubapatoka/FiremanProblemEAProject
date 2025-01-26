@@ -1,6 +1,7 @@
 import networkx as nx
 import copy
 import json
+import numpy as np
 from Displayer import Displayer
 
 class FirefighterProblem:
@@ -30,6 +31,32 @@ class FirefighterProblem:
 
         # Run the simulation
         displayer.simulate_fire(graph_copy, gif_path, fps)
+
+    def count_burned_verts(self, fireman):
+        number_of_nodes = self.graph.number_of_nodes()
+        burned = np.repeat(False, number_of_nodes)
+
+        queue = []
+        for f in self.fire_starts:
+            queue.append(f)
+            burned[f] = True
+
+        while not queue:
+            first_elem = queue.pop(0)
+            neighbours = self.graph.neighbors(first_elem)
+            for n in neighbours:
+                if n in queue or burned[n] or n in fireman:
+                    continue
+                queue.append(n)
+
+        burned_number = 0
+        for i in range(number_of_nodes):
+            if burned[i]:
+                burned_number += 1
+        burned_number -= len(self.fire_starts)
+
+        return burned_number
+
 
 @classmethod
 def load_from_file(cls, file_path):
