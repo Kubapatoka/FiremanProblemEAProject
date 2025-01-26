@@ -13,6 +13,9 @@ class Instance:
         self._generator = generator
         self.size = len(self.problem.graph)
 
+        self.solutions = []
+        self.metrics = pd.DataFrame(columns=["iteration", "time", "min", "mean", "max", "std"])
+
 
     def mut(self, gene, o):
         o1 = self._mutator(self.problem, gene, o)
@@ -26,5 +29,4 @@ class Instance:
 
     def fix(self, o, distribution=None):
         return self._fixer(self.problem, o, distribution=distribution)
-
 

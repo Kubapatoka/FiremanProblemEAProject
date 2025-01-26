@@ -1,10 +1,10 @@
 import numpy as np
 from typing import Final
 from .MTGAInstance import Instance
+from ..RecordKeeping import register_metrics
 
+from time import time
 
-
-# behaves like an algorithm
 class MTGA:
     def __init__(self, instance: Instance, **kwargs):
         self.instance: Instance = instance
@@ -50,4 +50,49 @@ class MTGA:
     def judge_population(self, genes, population, new_population,
                          objective_value, new_objective_value):
         # do something (feedback)
-        return new_genes
+        return new_genes, population, objective_value
+
+def optimize(instance: Instance, **kwargs):
+    number_of_iterations = kwargs.get('number_of_iterations', 100)
+    mtga = MTGA(instance, **kwargs)
+    current_genes = mtga.initialize_genes()
+
+    run_time0 = time()
+    for it in range(number_of_iterations):
+        iter_time0 = time()
+        population = mtga.generate_population(current_genes)
+        objective_value = mtga.eval_population(population)
+        mutated = mtga.mutate_population(genes, population)
+        mut_objective_value = mtga.eval_population(mutated)
+        current_genes, population, objective_value = mtga.judge_population(
+            current_genes, population, mutated, objective_value, mut_objective_value
+        )
+
+        solution_idx = objective_value.argmax() # we are searching for highest value
+        instance.solution.append(population[solution_idx], objective_value[solution_idx])
+
+        iter_time = time() - iter_time0
+        register_metrics(None, it, time() - run_time0, iter_time, objective_value, **kwargs)
+
+
+def optimize_and_record(instance: Instance, **kwargs):
+    number_of_iterations = kwargs.get('number_of_iterations', 100)
+    mtga = MTGA(instance, **kwargs)
+    current_genes = mtga.initialize_genes()
+
+    run_time0 = time()
+    for it in range(number_of_iterations):
+        iter_time0 = time()
+        population = mtga.generate_population(current_genes)
+        objective_value = mtga.eval_population(population)
+        mutated = mtga.mutate_population(genes, population)
+        mut_objective_value = mtga.eval_population(mutated)
+        current_genes, population, objective_value = mtga.judge_population(
+            current_genes, population, mutated, objective_value, mut_objective_value
+        )
+
+        solution_idx = objective_value.argmax() # we are searching for highest value
+        instance.solution.append(population[solution_idx], objective_value[solution_idx])
+
+        iter_time = time() - iter_time0
+        register_metrics(instance.metrics, it, time() - run_time0, iter_time, objective_value, **kwargs)
