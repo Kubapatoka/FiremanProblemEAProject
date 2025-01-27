@@ -4,13 +4,15 @@ from ProblemDef import FirefighterProblem
 
 
 class Instance:
-    def __init__(self, file_name, evaluator, mutator, crossover, generator, fixer):
+    def __init__(self, file_name, evaluator, mutator, crossover, generator,
+                 fixer, weight_generator):
         self.problem: FirefighterProblem = FirefighterProblem.load_from_file(file_name)
         self._mutator   = mutator
         self._crossover = crossover
         self._evaluator = evaluator
         self._fixer     = fixer
         self._generator = generator
+        self._weight_generator = weight_generator
         self.size = len(self.problem.graph)
 
         self.solutions = []
@@ -30,3 +32,5 @@ class Instance:
     def fix(self, o, distribution=None):
         return self._fixer(self.problem, o, distribution=distribution)
 
+    def get_weights(self, objective_values):
+        return self._weight_generator(self.problem, objective_values)
