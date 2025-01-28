@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as pltcolors
 
 from datetime import datetime
 
@@ -28,3 +30,31 @@ def register_metrics(metrics, iteration, run_time, iter_time, objective_value, *
             "std":  iter_std
         }
         metrics.loc[len(metrics)] = new_row
+
+
+def draw_progress(register, title):
+    npregister = np.array(register)
+    print(npregister.shape)
+
+    plt.figure()
+    plt.title(title)
+    labels = ['min', 'mean', 'max', 'std', 'time', ]
+    colors = list(pltcolors.TABLEAU_COLORS.values())
+    for i, c in enumerate(colors[:3]):
+        plt.plot(npregister[:,i], color=c, label=labels[i])
+    plt.legend()
+    plt.show()
+    
+    i = 3
+    plt.figure()
+    plt.title(title+" - std")
+    plt.plot(npregister[:,i], color=c, label=labels[i])
+    plt.legend()
+    plt.show()
+    
+    i = 4
+    plt.figure()
+    plt.title(title+" - time")
+    plt.plot(npregister[:,i], label=labels[i])
+    plt.legend()
+    plt.show()

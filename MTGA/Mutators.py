@@ -1,9 +1,9 @@
 import numpy as np
 import networkx as nx
-from ..ProblemDef import FirefighterProblem
+from ProblemDef import FirefighterProblem
 
 class WalkMutator:
-    def __init__(self, number_of_walkers, max_length_of_walks):
+    def __init__(self, number_of_walkers=4, max_length_of_walks=2):
         self.number_of_walkers = number_of_walkers
         self.max_length_of_walks = max_length_of_walks
 

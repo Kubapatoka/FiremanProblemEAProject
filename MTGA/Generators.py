@@ -1,8 +1,8 @@
 from scipy.stats import beta
-from ..ProblemDef import FirefighterProblem
+from ProblemDef import FirefighterProblem
 
 class Generator:
-    def __init__(self, std_dev):
+    def __init__(self, std_dev=0.2):
         self.std_dev = std_dev
 
     def __call__(self, problem: FirefighterProblem):
@@ -11,5 +11,5 @@ class Generator:
         alpha = ((1 - mean) / variance - 1 / mean) * mean**2
         beta_param = alpha * (1 / mean - 1)
 
-        samples = beta.rvs(alpha, beta_param, size=size)
+        samples = beta.rvs(alpha, beta_param, size=len(problem.graph))
         return samples
