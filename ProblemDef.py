@@ -92,11 +92,11 @@ class FirefighterProblem:
 
 
 
-@classmethod
-def load_from_file(cls, file_path):
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    graph = nx.node_link_graph(data["graph"])  # Odtworzenie grafu z danych JSON
-    fire_starts = data["fire_starts"]
-    num_teams = data["num_teams"]
-    return cls(graph, fire_starts, num_teams)
+    @classmethod
+    def load_from_file(cls, file_path):
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        graph = nx.node_link_graph(data["graph"])  # Odtworzenie grafu z danych JSON
+        fire_starts = data["fire_starts"]
+        num_teams = data["num_teams"]
+        return cls(graph, fire_starts, num_teams)
