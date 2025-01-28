@@ -67,3 +67,9 @@ def softmax(array, temperature=5):
     weights = exp_values / np.sum(exp_values)
     return weights
 
+def check_shape(arr, shape, msg=None):
+    if arr.shape != shape:
+        if msg == None:
+            print(f"expected shape {shape}, but gotten {arr.shape}")
+        else:
+            print(f"{msg} expected shape {shape}, but gotten {arr.shape}")
