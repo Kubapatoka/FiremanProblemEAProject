@@ -36,17 +36,20 @@ class MTGA:
     def eval_population(self, population):
         flat_population = population.reshape(self.tribe_num * self.tribe_pop, -1)
         flat_objective_values = np.array([self.instance.eval(ind) for ind in flat_population])
-        objective_value = flat_objective_values.reshape(tribe_num, tribe_pop)
+        objective_value = flat_objective_values.reshape(self.tribe_num, self.tribe_pop)
         return objective_value
 
     def generate_mutated_population(self, genes):
         population = np.zeros((self.tribe_num, self.tribe_pop, self.instance.size), dtype=bool)
         for i, gene in enumerate(genes):
             random_values = np.random.rand(self.tribe_pop, self.instance.size)
+            # TODO: Channge is so that in's not batched
             population[i,:,:] = (random_values < gene).astype(bool)
             for j in range(self.tribe_pop):
                 if random() < self.mut_prob:
                     population[i,j,:] = self.instance.mut(gene, population[i,j,:])
+                else:
+                    population[i,j,:] = self.instance.fix(population[i,j,:], gene)
         return population
 
     def judge_population(self, genes, population, objective_value):
@@ -72,6 +75,10 @@ class MTGA:
             global_feedback*self.global_feedback_weight
         return new_genes
 
+    def check_population(self, population):
+        sums = arr.sum(axis=2)
+        assert np.all(sums == self.instance.size) 
+
 def optimize(instance: Instance, **kwargs):
     number_of_iterations = kwargs.get('number of iterations', 100)
     mtga = MTGA(instance, **kwargs)
@@ -81,6 +88,7 @@ def optimize(instance: Instance, **kwargs):
     for it in range(number_of_iterations):
         iter_time0 = time()
         population = mtga.generate_mutated_population(current_genes)
+        mtga.check_population(population)
         objective_value = mtga.eval_population(population)
         current_genes = mtga.judge_population(current_genes, population, objective_value)
 

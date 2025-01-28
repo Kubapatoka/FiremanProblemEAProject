@@ -21,8 +21,10 @@ class Instance:
         self.problem = FirefighterProblem.load_from_file(file_name)
 
     def mut(self, gene, o):
-        o1 = self._mutator(self.problem, gene, o)
-        return self.fix(o1, distribution=(1-gene))
+        distribution = 1-gene
+        o1 = self._mutator(self.problem, gene,
+            self.fix(o, distribution=distribution))
+        return self.fix(o1, distribution=distribution)
 
     def eval(self, o):
         return self._evaluator(self.problem, o)

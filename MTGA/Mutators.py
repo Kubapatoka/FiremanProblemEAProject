@@ -8,14 +8,23 @@ class WalkMutator:
         self.max_length_of_walks = max_length_of_walks
 
     def select_indices(self, gene, o):
-        inverted_gene = (1 - gene) * o
-        normalized_probabilities = inverted_gene / inverted_gene.sum()
         valid_indices = np.where(o)[0]
+        inverted_gene = 1 - gene
+        probabilities = inverted_gene[valid_indices]
+        if probabilities.sum() == 0:
+            probabilities = np.ones_like(probabilities, dtype=np.float64) / len(probabilities)
+        else:
+            probabilities /= probabilities.sum()
+        if probabilities.sum() < 1e-6:
+            print(probabilities.sum(), probabilities)
+            print(gene)
+            print(o)
+
         selected_indices = np.random.choice(
             valid_indices,
             size=min(self.number_of_walkers, len(valid_indices)),
             replace=False,
-            p=normalized_probabilities[valid_indices]
+            p=probabilities
         )
         return selected_indices
 
