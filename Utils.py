@@ -16,11 +16,11 @@ def register_metrics(metrics, iteration, run_time, iter_time, objective_value, *
     iter_max  = objective_value.max()
     iter_std  = objective_value.std()
 
-    if kwargs.get('print_updates', True):
+    if kwargs.get('print updates', True):
         print('[%s][%3d] %14.8f %14.8f {%12.8f %12.8f %12.8f %12.8f}' %
               (ftime, iteration, run_time, iter_time, iter_min, iter_mean, iter_max, iter_std))
 
-    if metrics is not None:
+    if kwargs.get('record metrics', True):
         new_row = {
             "iteration": iteration,
             "time": iter_time,
@@ -58,3 +58,12 @@ def draw_progress(register, title):
     plt.plot(npregister[:,i], label=labels[i])
     plt.legend()
     plt.show()
+
+
+def softmax(array, temperature=5):
+    max_value = np.max(array)
+    scaled_values = (array - max_value) / temperature
+    exp_values = np.exp(scaled_values)
+    weights = exp_values / np.sum(exp_values)
+    return weights
+

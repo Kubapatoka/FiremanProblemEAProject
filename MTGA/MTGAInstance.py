@@ -21,10 +21,9 @@ class Instance:
         self.problem = FirefighterProblem.load_from_file(file_name)
 
     def mut(self, gene, o):
-        distribution = 1-gene
-        o1 = self._mutator(self.problem, gene,
-            self.fix(o, distribution=distribution))
-        return self.fix(o1, distribution=distribution)
+        ofixed = self.fix(o, distribution=gene)
+        o1 = self._mutator(self.problem, gene, ofixed)
+        return self.fix(o1, distribution=gene)
 
     def eval(self, o):
         return self._evaluator(self.problem, o)
@@ -33,7 +32,13 @@ class Instance:
         return self._generator(self.problem)
 
     def fix(self, o, distribution=None):
-        return self._fixer(self.problem, o, distribution=distribution)
+        res = self._fixer(self.problem, o, distribution=distribution)
+        if res.sum() != self.problem.num_teams:
+            print("pre:", o)
+            print("post:", res)
+            print()
+        assert res.sum() == self.problem.num_teams
+        return res
 
     def get_weights(self, objective_values):
         return self._weight_generator(self.problem, objective_values)
