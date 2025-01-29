@@ -7,7 +7,7 @@ def SGA(instance):
     population = instance.InitialPopulation()
     # population is a sorted list of pairs: (genotype, fitness_value)
     
-    while not instance.TerminationCondition(population):
+    while not instance.TerminationCondition():
         parents = instance.ParentSelection(population)
         # candidates are genotype
         candidates = instance.Crossover(parents)
