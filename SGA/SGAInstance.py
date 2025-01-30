@@ -8,7 +8,7 @@ class SGAInstance:
         self._populationInitializer = populationInitializer
         self._populationSize = populationSize
         self._chromosomeLength = self.problem.graph.number_of_nodes()
-        print("Init SGA instance. Chromosome length = {}", self._chromosomeLength)
+        #print("Init SGA instance. Chromosome length = {}", self._chromosomeLength)
         self._currentIteration = 0
         self._generationsNumber = generationsNumber
         self._parentsSelector = parentsSelector

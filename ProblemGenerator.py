@@ -16,7 +16,7 @@ def fires_starting_points(n, k):
 
 if __name__ == "__main__":
   args = len(sys.argv) - 1
-  n = 7
+  n = 100
   p = 0.3
   s = 2137
 
