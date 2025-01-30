@@ -16,11 +16,11 @@ def register_metrics(metrics, iteration, run_time, iter_time, objective_value, *
     iter_max  = objective_value.max()
     iter_std  = objective_value.std()
 
-    if kwargs.get('print updates', True):
+    if kwargs.get('print_updates', True):
         print('[%s][%3d] %14.8f %14.8f {%12.8f %12.8f %12.8f %12.8f}' %
               (ftime, iteration, run_time, iter_time, iter_min, iter_mean, iter_max, iter_std))
 
-    if kwargs.get('record metrics', True):
+    if kwargs.get('record_metrics', True):
         new_row = {
             "iteration": iteration,
             "time": iter_time,
@@ -66,6 +66,15 @@ def softmax(array, temperature=5):
     exp_values = np.exp(scaled_values)
     weights = exp_values / np.sum(exp_values)
     return weights
+
+def sigmoid(array, steepness):
+    final_steepness = steepness #np.std(array, axis=-1) * steepness
+    final_midpoint  = np.mean(array, axis=-1)
+    sigmoid_values = 1/(1 + np.exp(-final_steepness * (array - final_midpoint)))
+    return sigmoid_values / np.sum(sigmoid_values, axis=-1)
+
+def smooth_clip(x, lower_bound=0, steepness=200):
+    return (1/steepness) * np.log(1 + np.exp(steepness * (x-lower_bound))) + lower_bound
 
 def check_shape(arr, shape, msg=None):
     if arr.shape != shape:

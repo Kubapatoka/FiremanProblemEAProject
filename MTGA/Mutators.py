@@ -1,7 +1,7 @@
 import numpy as np
 import networkx as nx
 from ProblemDef import FirefighterProblem
-from Utils import softmax
+from Utils import *
 
 import math
 
@@ -18,7 +18,7 @@ class WalkMutator:
         if probabilities.sum() == 0:
             probabilities = np.ones_like(probabilities, dtype=np.float64) / len(probabilities)
         else:
-            probabilities /= probabilities.sum()
+            probabilities = softmax(probabilities)
 
         if np.abs(probabilities.sum()-1) > 1e-6:
             print("probabilities dont sum up to 1")

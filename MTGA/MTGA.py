@@ -1,7 +1,8 @@
 import numpy as np
 from typing import Final
 from .MTGAInstance import Instance
-from Utils import (register_metrics, check_shape)
+from Utils import *
+import Utils
 
 from time import time
 from random import random
@@ -11,13 +12,24 @@ class MTGA:
         self.instance: Instance = instance
 
         self.mut_prob:   Final[float] = kwargs.get('mutation_probability', 0.3)
-        self.cross_prob: Final[float] = kwargs.get('crossover_probability', 0.95)
-        self.tribe_num:  Final[int]   = kwargs.get('tribe number', 10)
-        self.tribe_pop:  Final[int]   = kwargs.get('tribe population', 20)
-        # self.local_step_size          = kwargs.get('local step size', 0.1)
-        # self.global_step_size         = kwargs.get('global step size', 0.1)
-        self.local_feedback_weight    = kwargs.get('local feedback weight', 0.1)
-        self.global_feedback_weight   = kwargs.get('global feedback weight', 0.05)
+        self.tribe_num:  Final[int]   = kwargs.get('tribe_number', 10)
+        self.tribe_pop:  Final[int]   = kwargs.get('tribe_population', 1000)
+        self.local_feedback_weight    = kwargs.get('local_feedback_weight', 0.5)
+        self.global_feedback_weight   = kwargs.get('global_feedback_weight', 0.05)
+
+        self.sigmoid_steepness        = kwargs.get('correction_sigmoid_steepness', 0.1)
+        self.softmax_temperature      = kwargs.get('correction_softmax_temperature', 0.05)
+        self.smooth_clip_steepness    = kwargs.get('correction_smooth_clip_steepness', 50)
+
+
+        if kwargs.get('correction_function', '') == 'sigmoid':
+            self.correction_function = lambda arr: sigmoid(arr, self.sigmoid_steepness)
+        elif kwargs.get('correction_function', '') == 'softmax':
+            self.correction_function = lambda arr: softmax(arr, self.softmax_temperature)
+        elif kwargs.get('correction_function', '') == 'smooth_clip':
+            self.correction_function = lambda arr: Utils.smooth_clip(arr, 0, self.smooth_clip_steepness)
+        else:
+            self.correction_function = lambda arr: np.clip(arr, 0, None)
 
     def initialize_genes(self):
         genes = np.zeros((self.tribe_num, self.instance.size), dtype=np.float64)
@@ -28,16 +40,11 @@ class MTGA:
     def generate_population(self, genes):
         population = np.zeros((self.tribe_num, self.tribe_pop, self.instance.size), dtype=bool)
         for i, gene in enumerate(genes):
-            random_values = np.random.rand(self.tribe_pop, self.instance.size)
-            population[i,:,:] = (random_values < gene).astype(bool)
+            for j in range(self.tribe_pop):
+                random_values = np.random.rand(self.instance.size)
+                population[i,j,:] = self.instance.fix((random_values < gene).astype(bool), distribution=gene)
+        self.check_population(population)
         return population
-
-
-    def eval_population(self, population):
-        flat_population = population.reshape(self.tribe_num * self.tribe_pop, -1)
-        flat_objective_values = np.array([self.instance.eval(ind) for ind in flat_population])
-        objective_value = flat_objective_values.reshape(self.tribe_num, self.tribe_pop)
-        return objective_value
 
     def generate_mutated_population(self, genes):
         population = np.zeros((self.tribe_num, self.tribe_pop, self.instance.size), dtype=bool)
@@ -47,41 +54,49 @@ class MTGA:
                 child = self.instance.fix((random_values < gene).astype(bool), distribution=gene)
                 if random() < self.mut_prob:
                     population[i,j,:] = self.instance.mut(gene, child)
+                else:
+                    population[i,j,:] = child
+        self.check_population(population)
         return population
+
+    def eval_population(self, population):
+        flat_population = population.reshape(self.tribe_num * self.tribe_pop, -1)
+        flat_objective_values = np.array([self.instance.eval(ind) for ind in flat_population])
+        objective_value = flat_objective_values.reshape(self.tribe_num, self.tribe_pop)
+        return objective_value
 
     def calculate_gene_weights(self, objective_value):
         return np.array([self.instance.get_weights(objective_value[i,:]) \
             for i in range(self.tribe_num)])
-        
+
 
     def judge_population(self, genes, population, objective_value, weights_array):
         check_shape(genes, (self.tribe_num, self.instance.size), "genes")
         check_shape(population, (self.tribe_num, self.tribe_pop, self.instance.size), "population")
         check_shape(objective_value, (self.tribe_num, self.tribe_pop), "objective_value")
         check_shape(weights_array, (self.tribe_num, self.tribe_pop), "weights_array")
+
         local_feedback = np.zeros((self.tribe_num, self.instance.size), dtype=np.float64)
-        # start with per chromosome feedback
         for i in range(self.tribe_num):
-            delta = weights_array[i, :, None] * ((population[i,:,:].astype(np.float64)*2)-1)
-            local_feedback[i,:] = delta.sum(axis=0)
+            scaled_population = population[i,:,:].astype(np.float64)*self.instance.size
+            delta = weights_array[i, :, None] * (scaled_population-self.instance.problem.num_teams-1) / self.instance.size
+            local_feedback[i,:] = delta.sum(axis=0)*self.local_feedback_weight
 
         # then do global chromosome feedback
         gene_values = self.eval_gene(objective_value, weights_array)
         gene_weights = self.instance.get_weights(gene_values)
         weighted_mean = np.sum(genes * gene_weights[:, None], axis=0) / np.sum(gene_weights)
         inverse_weights = 1.0 - gene_weights[:, None]
-        global_feedback = inverse_weights * (weighted_mean - genes)
+        global_feedback = inverse_weights * (weighted_mean - genes) * self.global_feedback_weight
 
-        new_genes = genes + \
-            local_feedback*self.local_feedback_weight + \
-            global_feedback*self.global_feedback_weight
-        new_genes_pos = np.clip(new_genes, 0, None)
-        new_genes_normed = new_genes_pos / np.sum(new_genes, axis=-1), 0, 1)
-        return np.clip(new_genes_normed, 0, 1)
+        new_genes = genes + local_feedback + global_feedback
+        return self.correction_function(new_genes)
 
     def check_population(self, population):
-        sums = arr.sum(axis=2)
-        assert np.all(sums == self.instance.size) 
+        sums = population.sum(axis=2)
+        if np.any(sums != self.instance.problem.num_teams):
+            print(population[(sums != self.instance.problem.num_teams)])
+            assert False, "population not valid"
 
     def find_best_solution(self, population, objective_value):
         flat_population = population.reshape(self.tribe_num * self.tribe_pop, -1)
@@ -94,7 +109,7 @@ class MTGA:
 
 
 def optimize(instance: Instance, **kwargs):
-    number_of_iterations = kwargs.get('number of iterations', 100)
+    number_of_iterations = kwargs.get('number_of_iterations', 100)
     mtga = MTGA(instance, **kwargs)
     current_genes = mtga.initialize_genes()
 
@@ -115,7 +130,7 @@ def optimize(instance: Instance, **kwargs):
         register_metrics(instance.metrics, it, time() - run_time0, iter_time, objective_value, **kwargs)
 
 def optimize_and_collect(instance, **kwargs):
-    number_of_iterations = kwargs.get('number of iterations', 100)
+    number_of_iterations = kwargs.get('number_of_iterations', 100)
     mtga = MTGA(instance, **kwargs)
     current_genes = mtga.initialize_genes()
 

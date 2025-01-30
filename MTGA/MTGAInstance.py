@@ -5,7 +5,7 @@ from ProblemDef import FirefighterProblem
 
 
 class Instance:
-    def __init__(self, file_name, evaluator, mutator, generator, fixer, weight_generator):
+    def __init__(self, file_name, evaluator, mutator, generator, fixer, weight_generator, **kwargs):
         self.problem: FirefighterProblem = FirefighterProblem.load_from_file(file_name)
         self._mutator   = mutator
         self._evaluator = evaluator
@@ -17,7 +17,7 @@ class Instance:
         self.solutions = []
         self.metrics = pd.DataFrame(columns=["iteration", "time", "min", "mean", "max", "std"])
 
-    def new_problem(self):
+    def new_problem(self, file_name):
         self.problem = FirefighterProblem.load_from_file(file_name)
 
     def mut(self, gene, o):
