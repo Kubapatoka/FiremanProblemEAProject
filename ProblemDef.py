@@ -36,13 +36,16 @@ class FirefighterProblem:
         number_of_nodes = self.graph.number_of_nodes()
         burned = np.repeat(False, number_of_nodes)
 
+        #print("count_burned_verts ", number_of_nodes, " ", len(self.fire_starts))
+        
         queue = []
         for f in self.fire_starts:
             queue.append(f)
-            burned[f] = True
 
-        while not queue:
+        while queue:
             first_elem = queue.pop(0)
+            burned[first_elem] = True
+            #print("burn ", first_elem)
             neighbours = self.graph.neighbors(first_elem)
             for n in neighbours:
                 if n in queue or burned[n] or n in fireman:

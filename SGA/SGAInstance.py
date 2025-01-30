@@ -59,8 +59,15 @@ class SGAInstance:
 
 
     def InitialPopulation(self):
-        return self._populationInitializer(self._populationSize, self._chromosomeLength, self.problem, self._evaluator)
+        new_population =  self._populationInitializer(self._populationSize, self._chromosomeLength, self.problem, self._evaluator)
+        new_population.sort(key=lambda v: v[1])
 
+        # for p in new_population:
+        #     print("\n")
+        #     for f in range(len(p[0])):
+        #         if p[0][f]: print(" ", f)
+            
+        return new_population
 
     def bestIndividual(self, population: list[tuple[list[bool],int]]):
         if self.best_solution == None or self.best_solution[1] > population[0][1]:
@@ -72,5 +79,5 @@ class SGAInstance:
             if population[0][0][j]:
                 fireman.append(j)
         print(fireman)
-        return population[0][0]
+        return fireman
 

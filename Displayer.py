@@ -7,7 +7,7 @@ class Displayer:
   def __init__(self, node_colors=None, frames_after_fire_done=3):
     self.node_colors = node_colors or {
       "guarded": "blue",
-      "burned": "black",
+      "burned": "brown",
       "on_fire": "red",
       "default": "green",
     }

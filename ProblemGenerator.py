@@ -5,6 +5,8 @@ import sys
 import ProblemDef as pd
 
 def generate_graph(n, p = 0.3, seed = 2137):
+    phelp = (6*n-12)/(n*n-2*n)
+    if p > phelp: p = phelp
     G = nx.gnp_random_graph(n, p, seed)
     return G
 
@@ -14,7 +16,7 @@ def fires_starting_points(n, k):
 
 if __name__ == "__main__":
   args = len(sys.argv) - 1
-  n = 10
+  n = 7
   p = 0.3
   s = 2137
 
@@ -40,4 +42,4 @@ if __name__ == "__main__":
   
   num_of_firefighters = random.randint(1,max_num_of_man)
   prob = pd.FirefighterProblem(G,F,num_of_firefighters)
-  prob.save_to_file("p1.json")
+  prob.save_to_file("p2.json")
