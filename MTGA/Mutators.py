@@ -19,6 +19,7 @@ class WalkMutator:
             probabilities = np.ones_like(probabilities, dtype=np.float64) / len(probabilities)
         else:
             probabilities /= probabilities.sum()
+
         if np.abs(probabilities.sum()-1) > 1e-6:
             print("probabilities dont sum up to 1")
             print(probabilities.sum(), probabilities)
