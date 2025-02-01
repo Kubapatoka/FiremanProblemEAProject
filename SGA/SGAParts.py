@@ -1,5 +1,6 @@
 from ProblemDef import FirefighterProblem 
 import random
+from Utils import *
 
 # populationInitializer
 def basicPI(populationSize : int, chromosomeSize : int, problem : FirefighterProblem, evaluator):
@@ -17,12 +18,89 @@ def basicPI(populationSize : int, chromosomeSize : int, problem : FirefighterPro
         newPopulation.append(tuple([candidate, evaluator(candidate, problem)]))
     return newPopulation
 
-    # TODO: random vert and some path
+def randomVertAndPathPI(populationSize : int, chromosomeSize : int, problem : FirefighterProblem, evaluator):
+    N = problem.num_teams
+
+    newPopulation = []
+
+    numVerts = problem.graph.number_of_nodes()
+
+    for i in range(populationSize):
+        fireman = []
+
+        while len(fireman) < N:
+            start_vert = random.randint(0, numVerts-1)
+            while start_vert in problem.fire_starts:
+                start_vert = random.randint(0, numVerts-1)
+
+            fireman.append(start_vert)
+            while len(fireman) < N:
+                neigh = list(filter(lambda x: x not in fireman and x not in problem.fire_starts, problem.graph.neighbors(fireman[-1])))
+                if len(neigh) == 0: break
+                fireman.append(neigh[random.randint(0, len(neigh)-1)])
+
+        candidate = fenotypeToGenotype(fireman, chromosomeSize)
+        newPopulation.append(tuple([candidate, evaluator(candidate, problem)]))
+    return newPopulation
+
+
+def randomVertAndDistrictPI(populationSize : int, chromosomeSize : int, problem : FirefighterProblem, evaluator):
+    N = problem.num_teams
+
+    newPopulation = []
+
+    numVerts = problem.graph.number_of_nodes()
+
+    for i in range(populationSize):
+        fireman = []
+
+        while len(fireman) < N:
+            start_vert = random.randint(0, numVerts-1)
+            while start_vert in problem.fire_starts:
+                start_vert = random.randint(0, numVerts-1)
+
+            fireman.append(start_vert)
+            neigh = list(filter(lambda x: x not in fireman and x not in problem.fire_starts, problem.graph.neighbors(start_vert)))
+
+            while len(fireman) < N:
+                newFireman = neigh[random.randint(0, len(neigh)-1)]
+                neigh.remove(newFireman)
+                fireman.append(newFireman)
+                neigh.extend(list(filter(lambda x: x not in fireman and x not in problem.fire_starts and x not in neigh, problem.graph.neighbors(newFireman))))
+                if len(neigh) == 0: break
+
+        candidate = fenotypeToGenotype(fireman, chromosomeSize)
+        newPopulation.append(tuple([candidate, evaluator(candidate, problem)]))
+    return newPopulation
+
 
 # parentsSelector
 def basicParentsSelector(population):
     pos1 = random.randint(0, len(population)-2)
     pos2 = random.randint(pos1, len(population)-1)
+
+    return tuple([pos1, pos2])
+
+def rankingParentsSelector(population):
+    prob = random.randint(1,100)
+    popSize = len(population)
+
+    if  prob < 80:
+        pos1 = random.randint(0, (popSize/10)-2)
+    elif  prob < 95:
+        pos1 = random.randint(popSize/10, (popSize/2)-2)
+    else:
+        pos1 = random.randint(popSize/2, popSize-2)
+
+    pos2 = pos1
+    while pos2 == pos1:
+        prob = random.randint(1,100)
+        if  prob < 80:
+            pos2 = random.randint(pos1, (popSize/10)-1)
+        elif  prob < 95:
+            pos2 = random.randint(popSize/10, (popSize/2)-1)
+        else:
+            pos2 = random.randint(popSize/2, popSize-1)
 
     return tuple([pos1, pos2])
 
@@ -54,18 +132,54 @@ def noMutator(genotype :list[bool], problem : FirefighterProblem):
 
 def basicMutator(genotype :list[bool], problem : FirefighterProblem):
     chromosomeSize = problem.graph.number_of_nodes()
+    
+    firemans = genotypeToFenotype(genotype)
+    pos = random.randint(0, len(firemans)-1)
+    f = firemans[pos]
 
     pos = random.randint(0, chromosomeSize-1)
-    while pos in problem.fire_starts or not genotype[pos]:
+    while pos in problem.fire_starts or pos in firemans:
         pos = random.randint(0, chromosomeSize-1)
-    genotype[pos] = False
 
-    pos = random.randint(0, chromosomeSize-1)
-    while pos in problem.fire_starts or genotype[pos]:
+    firemans.remove(f)
+    firemans.append(pos)
+
+    return fenotypeToGenotype(firemans, chromosomeSize)
+
+# TODO
+def neighbourMutator(genotype : list[bool], problem : FirefighterProblem):
+    chromosomeSize = problem.graph.number_of_nodes()
+
+    firemans = genotypeToFenotype(genotype)
+
+    pos = random.randint(0, len(firemans)-1)
+
+    f = firemans[pos]
+
+    neigh = list(problem.graph.neighbors(f))
+    for n in neigh:
+        if n in firemans or n in problem.fire_starts:
+            neigh.remove(n)
+
+    if len(neigh) == 0:
         pos = random.randint(0, chromosomeSize-1)
-    genotype[pos] = True
+        while pos in problem.fire_starts or pos in firemans:
+            pos = random.randint(0, chromosomeSize-1)
 
-    return genotype
+        firemans.remove(f)
+        firemans.append(pos)
+
+        return fenotypeToGenotype(firemans, chromosomeSize)
+
+    pos = random.randint(0, len(neigh)-1)
+    while pos in problem.fire_starts or pos in firemans:
+        pos = random.randint(0, len(neigh)-1)
+
+    firemans.remove(f)
+    firemans.append(pos)
+
+    return fenotypeToGenotype(firemans, chromosomeSize)
+
 
 # fixer
 def basicFixer(genotype :list[bool], problem : FirefighterProblem):

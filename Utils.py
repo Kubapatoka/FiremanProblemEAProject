@@ -73,3 +73,18 @@ def check_shape(arr, shape, msg=None):
             print(f"expected shape {shape}, but gotten {arr.shape}")
         else:
             print(f"{msg} expected shape {shape}, but gotten {arr.shape}")
+            
+            
+def genotypeToFenotype(gen : list[bool]):
+    fireman = []
+    for j in range(len(gen)):
+        if gen[j]:
+            fireman.append(j)
+    return fireman
+
+def fenotypeToGenotype(fen : list[int], chromosomeLen: int):
+    fireman = [False for _ in range(chromosomeLen)]
+    for j in fen:
+        fireman[j] = True
+    return fireman
+

@@ -1,6 +1,6 @@
 from ProblemDef import FirefighterProblem 
 import numpy as np
-
+from Utils import *
 
 class SGAInstance:
     def __init__(self, file_name, populationInitializer, populationSize, generationsNumber, parentsSelector, crossover, mutator, fixer, mutationProb, evaluator):
@@ -66,18 +66,16 @@ class SGAInstance:
         #     print("\n")
         #     for f in range(len(p[0])):
         #         if p[0][f]: print(" ", f)
-            
+
         return new_population
 
     def bestIndividual(self, population: list[tuple[list[bool],int]]):
         if self.best_solution == None or self.best_solution[1] > population[0][1]:
             self.best_solution = population[0]
         print(population[0][1])
-        
-        fireman = []
-        for j in range(self._chromosomeLength):
-            if population[0][0][j]:
-                fireman.append(j)
+
+        fireman = genotypeToFenotype(population[0][0])
+
         print(fireman)
         return fireman
 
