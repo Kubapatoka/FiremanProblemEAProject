@@ -2,7 +2,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import PillowWriter, FuncAnimation
+from IPython.core.display import HTML
 import copy
+from tqdm import tqdm
 
 
 class Displayer:
@@ -18,7 +20,7 @@ class Displayer:
             },
         )
         self.frames_after_fire_done = kwargs.get("frames_after_fire_done", 3)
-        self.fps = kwargs.get("fps", 1)
+        self.fps = kwargs.get("fps", 0.3)
 
     def _update_fire_state(self, graph: nx.Graph):
         new_on_fire = []
@@ -46,12 +48,12 @@ class Displayer:
     def _draw_graph(self, graph: nx.Graph, pos):
         colors = []
         for node in graph.nodes:
-            if graph.nodes[node]["guarded"]:
+            if graph.nodes[node]["starting"]:
+                colors.append(self.node_colors["starting"])
+            elif graph.nodes[node]["guarded"]:
                 colors.append(self.node_colors["guarded"])
             elif graph.nodes[node]["burned"]:
                 colors.append(self.node_colors["burned"])
-            elif graph.nodes[node]["starting"]:
-                colors.append(self.node_colors["starting"])
             elif graph.nodes[node]["on_fire"]:
                 colors.append(self.node_colors["on_fire"])
             else:
@@ -66,7 +68,7 @@ class Displayer:
             font_size=10,
         )
 
-    def _simulate_fire(self, graph, gif_path):
+    def _simulate_fire(self, graph, output_path):
         # Compute layout once
         pos = nx.spring_layout(graph, seed=42)
 
@@ -94,17 +96,31 @@ class Displayer:
         for _ in range(self.frames_after_fire_done):
             frames.append(frames[-1])
 
-        # Save to GIF
-        writer = PillowWriter(fps=self.fps)
-        ani = FuncAnimation(fig, lambda i: ax.imshow(frames[i]), frames=len(frames))
-        ani.save(gif_path, writer=writer)
+        progress_bar = tqdm(
+            total=len(frames),
+            desc="Rendering Frames",
+            unit="frame",
+            leave=False,
+        )
+
+        def update(frame):
+            progress_bar.update(1)
+            return ax.imshow(frames[frame])
+
+        ani = FuncAnimation(fig, update, frames=len(frames))
+
+        progress_bar.close()
+        if output_path is None:
+            return HTML(ani.to_jshtml())
+        else:
+            ani.save(output_path, writer=PillowWriter(fps=self.fps))
 
     def simulate_fire(
         self,
         graph,
         fire_starts,
         firefighter_placement,
-        gif_path="ourput/fire_simulation.gif",
+        **kwargs,
     ):
         # Deep copy the graph to avoid modifying the original
         graph_copy = copy.deepcopy(graph)
@@ -114,15 +130,17 @@ class Displayer:
             graph_copy.nodes[node]["guarded"] = node in firefighter_placement
             graph_copy.nodes[node]["burned"] = False
             graph_copy.nodes[node]["on_fire"] = node in fire_starts
+            graph_copy.nodes[node]["starting"] = node in fire_starts
 
-        self._simulate_fire(graph_copy, gif_path)
+        output_path = kwargs.get("output_path", None)
+        return self._simulate_fire(graph_copy, output_path)
 
     def simulate_multiple_fireman_scenarios(
         self,
         graph,
         fire_starts,
         firefighter_placements,
-        gif_path="fireman_scenarios.gif",
+        **kwargs,
     ):
         """
         Simulates different fireman placements and generates a GIF showing the end result for each scenario.
@@ -137,12 +155,15 @@ class Displayer:
         frames = []
         fig, ax = plt.subplots()
 
-        for fireman in firefighter_placements:
+        for fireman in tqdm(
+            firefighter_placements, desc="Generating Scenarios", leave=False
+        ):
             graph_copy = copy.deepcopy(graph)
             for node in graph_copy.nodes:
                 graph_copy.nodes[node]["guarded"] = node in fireman
                 graph_copy.nodes[node]["burned"] = False
                 graph_copy.nodes[node]["on_fire"] = node in fire_starts
+                graph_copy.nodes[node]["starting"] = node in fire_starts
 
             while self._is_fire_active(graph_copy):
                 self._update_fire_state(graph_copy)
@@ -157,6 +178,24 @@ class Displayer:
         for _ in range(self.frames_after_fire_done):
             frames.append(frames[-1])
 
-        writer = PillowWriter(fps=self.fps)
-        ani = FuncAnimation(fig, lambda i: ax.imshow(frames[i]), frames=len(frames))
-        ani.save(gif_path, writer=writer)
+        progress_bar = tqdm(
+            total=len(frames),
+            desc="Rendering Frames",
+            unit="frame",
+            leave=False,
+        )
+
+        def update(frame):
+            progress_bar.update(1)
+            return ax.imshow(frames[frame])
+
+        ani = FuncAnimation(fig, update, frames=len(frames))
+
+        progress_bar.close()
+        output_path = kwargs.get("output_path", None)
+        if output_path is None:
+            return HTML(ani.to_jshtml())
+        else:
+            ani.save(output_path, writer=PillowWriter(fps=self.fps))
+            plt.close(fig)
+            print(f"GIF saved to {output_path}")
