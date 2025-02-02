@@ -2,7 +2,7 @@ import numpy as np
 
 
 class SoftmaxWeights:
-    def __init__(self, temperature=100.0):
+    def __init__(self, temperature=2.0):
         self.temperature = temperature
 
     def __call__(self, problem, objective_values):
