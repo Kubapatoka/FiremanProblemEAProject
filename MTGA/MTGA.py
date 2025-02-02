@@ -18,7 +18,11 @@ class MTGA:
         self.tribe_pop = kwargs.get("tribe_population", 50)
 
         self.zero_impact = kwargs.get(
-            "zero_impact", instance.problem.num_teams // instance.size
+            "zero_impact", float(instance.problem.num_teams) / instance.size
+        )
+        self.one_impact = kwargs.get(
+            "one_impact",
+            float(instance.size - instance.problem.num_teams) / instance.size,
         )
 
         self.local_feedback_weight = kwargs.get("local_feedback_weight", 0.5)
@@ -114,14 +118,10 @@ class MTGA:
             (self.tribe_num, self.instance.size), dtype=np.float64
         )
         for i in range(self.tribe_num):
-            scaled_population = (
-                population[i, :, :].astype(np.float64) * self.instance.size
+            scaled_population = population[i, :, :].astype(np.float64) * (
+                self.one_impact + np.abs(self.zero_impact)
             )
-            delta = (
-                weights_array[i, :, None]
-                * (scaled_population - self.instance.problem.num_teams - 1)
-                / self.instance.size
-            )
+            delta = weights_array[i, :, None] * (scaled_population + self.zero_impact)
             local_feedback[i, :] = delta.sum(axis=0) * self.local_feedback_weight
 
         # then do global chromosome feedback
@@ -132,6 +132,10 @@ class MTGA:
         )
 
         distances = cdist(genes, genes, metric="euclidean")
+        sigma = np.mean(distances)
+        affinity_matrix = np.exp(-distances / sigma)
+        scores = np.sum(affinity_matrix, axis=1) - np.diag(affinity_matrix)
+        # TODO: Finish this
         inverse_weights = 1.0 - gene_weights[:, None]
         global_feedback = (
             inverse_weights * (weighted_mean - genes) * self.global_feedback_weight
