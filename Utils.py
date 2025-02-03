@@ -147,3 +147,25 @@ def compute_scores(points):
     scores = np.sum(affinity_matrix, axis=1) - np.diag(affinity_matrix)
 
     return scores
+
+
+def print_parameters(filename, values, *args):
+    with open(filename, "w") as file:
+        for i in range(values.shape[0]):
+            file.write(f"Tribe {i}\n")
+            for j in range(values.shape[1]):
+                file.write(f"- {values[i,j]:3.3f}")
+                for arg in args:
+                    file.write(f" {arg[i,j]:3.3f}")
+                file.write("\n")
+    print(f"Sorted values and weights saved to {filename}")
+
+
+def print_sorted_parameters(filename, values, *args):
+    sorted_indices = np.argsort(values, axis=1)
+    sorted_values = np.take_along_axis(values, sorted_indices, axis=1)
+    sorted_args = []
+    for arg in args:
+        sorted_args.append(np.take_along_axis(arg, sorted_indices, axis=1))
+
+    print_parameters(filename, sorted_values, *sorted_args)
