@@ -293,7 +293,9 @@ class MTGA:
 
     def reset_output_file(self, iteration):
         self.output_file.close()
-        self.output_file = self.weights_output_filename.format(iteration=iteration)
+        self.output_file = open(
+            self.weights_output_filename.format(iteration=iteration), "w"
+        )
 
 
 def optimize(instance: Instance, **kwargs):
