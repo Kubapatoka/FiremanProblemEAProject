@@ -20,7 +20,18 @@ class FirefighterProblem:
             json.dump(data, f)
 
     def visualize_fire(
-        self, displayer: Displayer, fireman, gif_path="output/fire_simulation.gif"
+        self,
+        displayer: Displayer,
+        fireman,
+        **kwargs,
+    ):
+        return displayer.simulate_fire(self.graph, self.fire_starts, fireman, **kwargs)
+
+    def visualize_fires(
+        self,
+        displayer: Displayer,
+        fireman_placements,
+        **kwargs,
     ):
         displayer.simulate_fire(self.graph, self.fire_starts, fireman)
         
