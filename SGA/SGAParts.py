@@ -96,7 +96,7 @@ def rankingParentsSelector(population):
     while pos2 == pos1:
         prob = random.randint(1,100)
         if  prob < 80:
-            pos2 = random.randint(pos1, (popSize/10)-1)
+            pos2 = random.randint(0, (popSize/10)-1)
         elif  prob < 95:
             pos2 = random.randint(popSize/10, (popSize/2)-1)
         else:
@@ -146,7 +146,7 @@ def basicMutator(genotype :list[bool], problem : FirefighterProblem):
 
     return fenotypeToGenotype(firemans, chromosomeSize)
 
-# TODO
+
 def neighbourMutator(genotype : list[bool], problem : FirefighterProblem):
     chromosomeSize = problem.graph.number_of_nodes()
 
