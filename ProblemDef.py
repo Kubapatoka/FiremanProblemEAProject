@@ -23,6 +23,11 @@ class FirefighterProblem:
         self, displayer: Displayer, fireman, gif_path="output/fire_simulation.gif"
     ):
         displayer.simulate_fire(self.graph, self.fire_starts, fireman)
+        
+    def visualize_fire_without_burned(
+        self, displayer: Displayer, fireman, gif_path="output/fire_simulation.gif"
+    ):
+        displayer.simulate_fire_lite(self.graph, self.fire_starts, fireman)
 
     def count_burned_verts(self, fireman):
         number_of_nodes = self.graph.number_of_nodes()

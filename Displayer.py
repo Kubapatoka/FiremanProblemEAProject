@@ -103,6 +103,48 @@ class Displayer:
             leave=False,
         )
 
+
+    def _simulate_fire_lite(self, graph : nx.Graph, output_path):
+        # Compute layout once
+        pos = nx.spring_layout(graph, seed=42)
+
+        # Initialize the GIF frames
+        frames = []
+        fig, ax = plt.subplots()
+
+        # Simulation loop
+        while True:
+            ax.clear()
+            self._draw_graph(graph, pos)
+
+            # Capture frame
+            fig.canvas.draw()
+            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            frame = frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            frames.append(frame)
+
+            if not self._is_fire_active(graph):
+                break
+
+            nodes_to_delete = []
+            for node in graph.nodes:
+                if graph.nodes[node]["burned"] == True:
+                    nodes_to_delete.append(node)
+
+            for node in nodes_to_delete: graph.remove_node(node)
+            self._update_fire_state(graph)
+
+        # Add a few frames of the final state
+        for _ in range(self.frames_after_fire_done):
+            frames.append(frames[-1])
+
+        progress_bar = tqdm(
+            total=len(frames),
+            desc="Rendering Frames",
+            unit="frame",
+            leave=False,
+        )
+
         def update(frame):
             progress_bar.update(1)
             return ax.imshow(frames[frame])
@@ -134,6 +176,26 @@ class Displayer:
 
         output_path = kwargs.get("output_path", None)
         return self._simulate_fire(graph_copy, output_path)
+    
+    def simulate_fire_lite(
+        self,
+        graph,
+        fire_starts,
+        firefighter_placement,
+        **kwargs,
+    ):
+        # Deep copy the graph to avoid modifying the original
+        graph_copy = copy.deepcopy(graph)
+
+        # Initialize attributes
+        for node in graph_copy.nodes:
+            graph_copy.nodes[node]["guarded"] = node in firefighter_placement
+            graph_copy.nodes[node]["burned"] = False
+            graph_copy.nodes[node]["on_fire"] = node in fire_starts
+            graph_copy.nodes[node]["starting"] = node in fire_starts
+
+        output_path = kwargs.get("output_path", None)
+        return self._simulate_fire_lite(graph_copy, output_path)
 
     def simulate_multiple_fireman_scenarios(
         self,
