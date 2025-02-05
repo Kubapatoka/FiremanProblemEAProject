@@ -172,11 +172,9 @@ def neighbourMutator(genotype : list[bool], problem : FirefighterProblem):
         return fenotypeToGenotype(firemans, chromosomeSize)
 
     pos = random.randint(0, len(neigh)-1)
-    while pos in problem.fire_starts or pos in firemans:
-        pos = random.randint(0, len(neigh)-1)
 
     firemans.remove(f)
-    firemans.append(pos)
+    firemans.append(neigh[pos])
 
     return fenotypeToGenotype(firemans, chromosomeSize)
 
@@ -209,8 +207,4 @@ def basicFixer(genotype :list[bool], problem : FirefighterProblem):
 
 # evaluator
 def basicEvaluator(genotype :list[bool], problem : FirefighterProblem):
-    fireman = []
-    for i in  range(problem.graph.number_of_nodes()):
-        if genotype[i]:
-            fireman.append(i)
-    return problem.count_burned_verts(fireman=fireman)
+    return problem.count_burned_verts(genotypeToFenotype(genotype))

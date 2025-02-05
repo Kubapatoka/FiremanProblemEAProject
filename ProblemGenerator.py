@@ -46,11 +46,12 @@ def normal_graph():
   prob.save_to_file("p7.json")
     
 def barabasi_graph():
-  n = 100
+  n = 60
   p = (6*n-12)/(n*n-2*n)/20
   s = 2137
   G = generate_graph(n, p, s)
-  G = nx.barabasi_albert_graph(2*n, 15, 453, G)
+  G = None
+  G = nx.barabasi_albert_graph(2*n, 6, 453, G)
   F = fires_starting_points(n,3)
     
   counted = []
@@ -64,7 +65,7 @@ def barabasi_graph():
           
   num_of_firefighters = random.randint(max_num_of_man/3,max_num_of_man)
   prob = pd.FirefighterProblem(G,F,num_of_firefighters)
-  prob.save_to_file("p7.json")
+  prob.save_to_file("p8.json")
 
 
 if __name__ == "__main__":
