@@ -70,7 +70,7 @@ class Displayer:
 
     def _simulate_fire(self, graph, output_path):
         # Compute layout once
-        pos = nx.spring_layout(graph, seed=42)
+        pos = nx.spring_layout(graph)
 
         # Initialize the GIF frames
         frames = []
