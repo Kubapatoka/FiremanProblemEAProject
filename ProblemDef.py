@@ -33,19 +33,21 @@ class FirefighterProblem:
         fireman_placements,
         **kwargs,
     ):
-        displayer.simulate_fire(self.graph, self.fire_starts, fireman)
-        
-    def visualize_fire_without_burned(
-        self, displayer: Displayer, fireman, gif_path="output/fire_simulation.gif"
-    ):
-        displayer.simulate_fire_lite(self.graph, self.fire_starts, fireman)
+        return displayer.simulate_fire(
+            self.graph, self.fire_starts, fireman_placements, **kwargs
+        )
+
+    def visualize_fire_without_burned(self, displayer: Displayer, fireman, **kwargs):
+        return displayer.simulate_fire_lite(
+            self.graph, self.fire_starts, fireman, **kwargs
+        )
 
     def count_burned_verts(self, fireman):
         number_of_nodes = self.graph.number_of_nodes()
         burned = np.repeat(False, number_of_nodes)
 
-        #print("count_burned_verts ", number_of_nodes, " ", len(self.fire_starts))
-        
+        # print("count_burned_verts ", number_of_nodes, " ", len(self.fire_starts))
+
         queue = []
         for f in self.fire_starts:
             queue.append(f)

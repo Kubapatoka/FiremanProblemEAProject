@@ -71,7 +71,8 @@ def visualize_gene_evolution(collected_data):
 
         plt.title(f"Gene Evolution for Tribe {tribe}")
         plt.ylim(0, 1)
-        plt.legend()
+        if chromosome_len < 15:
+            plt.legend()
         plt.grid(True)
         plt.show()
 
@@ -246,15 +247,14 @@ def draw_graph(graph, fire_starts, **kwargs):
         else:
             colors.append(node_colors["default"])
 
-    print("colors", colors)
-    print("nodes", graph.nodes)
-
+    node_size = kwargs.get("node_size", 800)
+    font_size = kwargs.get("font_size", 10)
     pos = nx.spring_layout(graph)
     nx.draw(
         graph,
         pos=pos,
         with_labels=True,
         node_color=colors,
-        node_size=800,
-        font_size=10,
+        node_size=node_size,
+        font_size=font_size,
     )
