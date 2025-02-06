@@ -1,0 +1,8 @@
+p1 - Mały graf z możliwością zablokowania ognia u źródła.
+p2 - tak samo
+p3 - średni graf (100 wierzchołków). Całkowicie losowy. 18 strażaków to maksymalna ciekawa ilość
+p4 - graf w którym da się zablokować ścieżkę i uratować ją
+p5 - dwa grafy połączone 3ma mostami
+p6 - p5 z losowo dołożonymi krawędziami (1300 wierzchołków)
+p7 - barabasi albert na podstawie losowego grafu
+p8 - barabasi albert czysty
