@@ -5,17 +5,38 @@ from ProblemDef import FirefighterProblem
 
 
 class Instance:
-    def __init__(self, file_name, evaluator, mutator, generator, fixer, weight_generator, **kwargs):
+    def __init__(
+        self,
+        file_name,
+        evaluator,
+        mutator,
+        generator,
+        fixer,
+        weight_generator,
+        gene_mutator,
+        **kwargs
+    ):
         self.problem: FirefighterProblem = FirefighterProblem.load_from_file(file_name)
-        self._mutator   = mutator
+        self._mutator = mutator
         self._evaluator = evaluator
-        self._fixer     = fixer
+        self._fixer = fixer
         self._generator = generator
         self._weight_generator = weight_generator
+        self._gene_mutator = gene_mutator
         self.size = len(self.problem.graph)
 
         self.solutions = []
-        self.metrics = pd.DataFrame(columns=["iteration", "time", "min", "mean", "max", "std"])
+        self.metrics = pd.DataFrame(
+            columns=["iteration", "time", "min", "mean", "max", "std"]
+        )
+
+    def reset(self):
+        self.solutions = []
+        self.metrics = pd.DataFrame(
+            columns=["iteration", "time", "min", "mean", "max", "std"]
+        )
+
+    # def copy(self):
 
     def new_problem(self, file_name):
         self.problem = FirefighterProblem.load_from_file(file_name)
@@ -24,6 +45,10 @@ class Instance:
         ofixed = self.fix(o, distribution=gene)
         o1 = self._mutator(self.problem, gene, ofixed)
         return self.fix(o1, distribution=gene)
+
+    def mutate_genes(self, g):
+        res = self._gene_mutator(self.problem, g)
+        return res
 
     def eval(self, o):
         return self._evaluator(self.problem, o)

@@ -1,10 +1,12 @@
 import pandas as pd
+import networkx as nx
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.special import rel_entr
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltcolors
 
+import copy
 from datetime import datetime
 
 
@@ -47,6 +49,32 @@ def register_metrics(
             "std": iter_std,
         }
         metrics.loc[len(metrics)] = new_row
+
+
+def visualize_gene_evolution(collected_data):
+    first_genes = collected_data[0]["genes"]
+    tribe_num, chromosome_len = first_genes.shape
+
+    generations = [entry["generation"] for entry in collected_data]
+    gene_data = np.array(
+        [entry["genes"] for entry in collected_data]
+    )  # Shape: (iterations, tribe_num, chromosome_len)
+
+    for tribe in range(tribe_num):
+        plt.figure(figsize=(10, 6))
+        for chromosome in range(chromosome_len):
+            plt.plot(
+                generations,
+                gene_data[:, tribe, chromosome],
+                label=f"Chromosome {chromosome}",
+            )
+
+        plt.title(f"Gene Evolution for Tribe {tribe}")
+        plt.ylim(0, 1)
+        if chromosome_len < 15:
+            plt.legend()
+        plt.grid(True)
+        plt.show()
 
 
 def draw_progress(register, title):
@@ -149,23 +177,84 @@ def compute_scores(points):
     return scores
 
 
-def print_parameters(filename, values, *args):
-    with open(filename, "w") as file:
-        for i in range(values.shape[0]):
-            file.write(f"Tribe {i}\n")
-            for j in range(values.shape[1]):
-                file.write(f"- {values[i,j]:3.3f}")
-                for arg in args:
-                    file.write(f" {arg[i,j]:3.3f}")
-                file.write("\n")
-    print(f"Sorted values and weights saved to {filename}")
+def print_parameters(file, values, *args):
+    for i in range(values.shape[0]):
+        file.write(f"Tribe {i}\n")
+        for j in range(values.shape[1]):
+            file.write(f"- {values[i,j]:3.3f}")
+            for arg in args:
+                file.write(f" {arg[i,j]:3.3f}")
+            file.write("\n")
 
 
-def print_sorted_parameters(filename, values, *args):
+def print_sorted_parameters(file, values, *args):
     sorted_indices = np.argsort(values, axis=1)
     sorted_values = np.take_along_axis(values, sorted_indices, axis=1)
     sorted_args = []
     for arg in args:
         sorted_args.append(np.take_along_axis(arg, sorted_indices, axis=1))
 
-    print_parameters(filename, sorted_values, *sorted_args)
+    print_parameters(file, sorted_values, *sorted_args)
+
+
+def correct_solutions(instance, evaluator=None):
+    def eval(arr):
+        if evaluator is None:
+            return arr
+        else:
+            return evaluator(instance.problem, arr)
+
+    solutions = [
+        (np.where(bool_array)[0].tolist(), eval(bool_array))
+        for bool_array, _ in instance.solutions
+    ]
+    return solutions
+
+
+def numpy_reset_default_prints():
+    np.set_printoptions(
+        edgeitems=3,
+        infstr="inf",
+        linewidth=75,
+        nanstr="nan",
+        precision=8,
+        suppress=False,
+        threshold=1000,
+        formatter=None,
+    )
+
+
+def draw_graph(graph, fire_starts, **kwargs):
+    node_colors = kwargs.get(
+        "node_colors",
+        {
+            "guarded": "blue",
+            "burned": "brown",
+            "on_fire": "red",
+            "starting": "yellow",
+            "default": "green",
+        },
+    )
+    teams = kwargs.get("teams", [])
+    colors = []
+
+    # Initialize attributes
+    for node in graph.nodes:
+        if node in fire_starts:
+            colors.append(node_colors["starting"])
+        elif node in teams:
+            colors.append(node_colors["guarded"])
+        else:
+            colors.append(node_colors["default"])
+
+    node_size = kwargs.get("node_size", 800)
+    font_size = kwargs.get("font_size", 10)
+    pos = nx.spring_layout(graph)
+    nx.draw(
+        graph,
+        pos=pos,
+        with_labels=True,
+        node_color=colors,
+        node_size=node_size,
+        font_size=font_size,
+    )

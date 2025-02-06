@@ -70,7 +70,7 @@ class Displayer:
 
     def _simulate_fire(self, graph, output_path):
         # Compute layout once
-        pos = nx.spring_layout(graph, seed=42)
+        pos = nx.spring_layout(graph)
 
         # Initialize the GIF frames
         frames = []
@@ -103,8 +103,19 @@ class Displayer:
             leave=False,
         )
 
+        def update(frame):
+            progress_bar.update(1)
+            return ax.imshow(frames[frame])
 
-    def _simulate_fire_lite(self, graph : nx.Graph, output_path):
+        ani = FuncAnimation(fig, update, frames=len(frames))
+
+        progress_bar.close()
+        if output_path is None:
+            return HTML(ani.to_jshtml())
+        else:
+            ani.save(output_path, writer=PillowWriter(fps=self.fps))
+
+    def _simulate_fire_lite(self, graph: nx.Graph, output_path):
         # Compute layout once
         pos = nx.spring_layout(graph, seed=42)
 
@@ -131,7 +142,8 @@ class Displayer:
                 if graph.nodes[node]["burned"] == True:
                     nodes_to_delete.append(node)
 
-            for node in nodes_to_delete: graph.remove_node(node)
+            for node in nodes_to_delete:
+                graph.remove_node(node)
             self._update_fire_state(graph)
 
         # Add a few frames of the final state
@@ -176,7 +188,7 @@ class Displayer:
 
         output_path = kwargs.get("output_path", None)
         return self._simulate_fire(graph_copy, output_path)
-    
+
     def simulate_fire_lite(
         self,
         graph,
@@ -204,22 +216,16 @@ class Displayer:
         firefighter_placements,
         **kwargs,
     ):
-        """
-        Simulates different fireman placements and generates a GIF showing the end result for each scenario.
-
-        Args:
-          graph (networkx.Graph): The input graph without attributes.
-          fire_starts (list): List of nodes where fire starts.
-          fireman_list (list of lists): Each inner list contains fireman placements for a scenario.
-          gif_path (str): Path to save the output GIF.
-        """
         pos = nx.spring_layout(graph, seed=42)
         frames = []
         fig, ax = plt.subplots()
 
+        print("AAAAaa")
+
         for fireman in tqdm(
             firefighter_placements, desc="Generating Scenarios", leave=False
         ):
+            print("fireman placement:", fireman)
             graph_copy = copy.deepcopy(graph)
             for node in graph_copy.nodes:
                 graph_copy.nodes[node]["guarded"] = node in fireman
