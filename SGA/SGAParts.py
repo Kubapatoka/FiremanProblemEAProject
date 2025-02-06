@@ -208,3 +208,31 @@ def basicFixer(genotype :list[bool], problem : FirefighterProblem):
 # evaluator
 def basicEvaluator(genotype :list[bool], problem : FirefighterProblem):
     return problem.count_burned_verts(genotypeToFenotype(genotype))
+
+def EffectiveUselessEvaluator(genotype :list[bool], problem : FirefighterProblem):
+    fireman = genotypeToFenotype(genotype)
+    burned = problem.count_burned_verts(fireman)
+    (effective_count, useless_count) = problem.effective_and_useless_firefighters_count(fireman)
+    return 2*burned + 10* useless_count - effective_count
+
+
+def RoundCountEvaluator(genotype :list[bool], problem : FirefighterProblem):
+    fireman = genotypeToFenotype(genotype)
+    (burned,rounds) = problem.count_burned_verts_and_rounds(fireman)
+    return 4*burned - rounds
+
+
+def intermediateEvaluator(genotype :list[bool], problem : FirefighterProblem):
+    fireman = genotypeToFenotype(genotype)
+    (burned,rounds) = problem.count_burned_verts_and_rounds(fireman)
+    (effective_count, useless_count) = problem.effective_and_useless_firefighters_count(fireman)
+    return 4*burned - rounds + 10* useless_count - effective_count
+
+
+def fireStepsEvaluator(genotype :list[bool], problem : FirefighterProblem):
+    fireman = genotypeToFenotype(genotype)
+    (burned,round_count, fire_steps) = problem.count_burned_verts_and_fire_motion(fireman)
+    (effective_count, useless_count) = problem.effective_and_useless_firefighters_count(fireman)
+    
+    #TODO sth with fire_steps
+    return 4*burned + 10*useless_count
