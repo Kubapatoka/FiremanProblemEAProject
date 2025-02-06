@@ -1,6 +1,7 @@
 from ProblemDef import FirefighterProblem 
 import random
 from Utils import *
+import statistics
 
 # populationInitializer
 def basicPI(populationSize : int, chromosomeSize : int, problem : FirefighterProblem, evaluator):
@@ -233,6 +234,19 @@ def fireStepsEvaluator(genotype :list[bool], problem : FirefighterProblem):
     fireman = genotypeToFenotype(genotype)
     (burned,round_count, fire_steps) = problem.count_burned_verts_and_fire_motion(fireman)
     (effective_count, useless_count) = problem.effective_and_useless_firefighters_count(fireman)
-    
+
     #TODO sth with fire_steps
-    return 4*burned + 10*useless_count
+    burned_until = []
+    percentGrowth = []
+    
+    growing_fire_count = 0
+
+    burned_until.append(fire_steps[0])
+    for i in range(1, len(fire_steps)):
+        burned_until.append(burned_until[i-1]+fire_steps[i])
+        percent = fire_steps[i]*100/burned_until[i]
+        percentGrowth.append( percent )
+        if fire_steps[i] > fire_steps[i-1] : growing_fire_count += 1
+
+
+    return (4+growing_fire_count/round_count + max(percentGrowth)/100 + statistics.mean(percentGrowth))*burned + 10*useless_count

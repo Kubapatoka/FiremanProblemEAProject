@@ -72,9 +72,9 @@ class SGAInstance:
     def bestIndividual(self, population: list[tuple[list[bool],int]]):
         if self.best_solution == None or self.best_solution[1] > population[0][1]:
             self.best_solution = population[0]
-        print(population[0][1])
 
         fireman = genotypeToFenotype(population[0][0])
+        print(self.problem.count_burned_verts(fireman))
 
         print(fireman)
         return fireman
