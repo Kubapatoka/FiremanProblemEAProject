@@ -46,8 +46,6 @@ class FirefighterProblem:
         number_of_nodes = self.graph.number_of_nodes()
         burned = np.repeat(False, number_of_nodes)
 
-        # print("count_burned_verts ", number_of_nodes, " ", len(self.fire_starts))
-
         queue = []
         for f in self.fire_starts:
             queue.append(f)
@@ -69,6 +67,74 @@ class FirefighterProblem:
         burned_number -= len(self.fire_starts)
 
         return burned_number
+    
+    
+    def count_burned_verts_and_rounds(self, fireman):
+        number_of_nodes = self.graph.number_of_nodes()
+        burned = np.repeat(False, number_of_nodes)
+        #print("count_burned_verts ", number_of_nodes, " ", len(self.fire_starts))
+
+        queue = []
+        for f in self.fire_starts:
+            queue.append((f,0))
+
+        round_count = 0
+        while queue:
+            (first_elem,r) = queue.pop(0)
+            round_count = max(round_count,r)
+            if burned[first_elem]:continue
+            burned[first_elem] = True
+            #print("burn ", first_elem)
+            neighbours = self.graph.neighbors(first_elem)
+            for n in neighbours:
+                if (n,r+1) in queue or burned[n] or n in fireman:
+                    continue
+                queue.append((n,r+1))
+
+        burned_number = 0
+        for i in range(number_of_nodes):
+            if burned[i]:
+                burned_number += 1
+        burned_number -= len(self.fire_starts)
+
+        return (burned_number,round_count)
+    
+    def count_burned_verts_and_fire_motion(self, fireman):
+        number_of_nodes = self.graph.number_of_nodes()
+        burned = np.repeat(False, number_of_nodes)
+
+        fire_steps = []
+
+        queue = []
+        first_round = ([],0)
+        for f in self.fire_starts:
+            first_round[0].append(f)
+        queue.append(first_round)
+
+        round_count = 0
+        while queue:
+            (fire_line, r) = queue.pop(0)
+            round_count = max(round_count,r)
+            fire_steps.append(len(fire_line))
+            new_fire_line = []
+
+            for fire_node in fire_line:
+                if burned[fire_node]:continue
+                burned[fire_node] = True
+                neighbours = self.graph.neighbors(fire_node)
+                for n in neighbours:
+                    if n in fire_line or burned[n] or n in fireman or n in new_fire_line:
+                        continue
+                    new_fire_line.append(n)
+            if len(new_fire_line)>0 : queue.append((new_fire_line,r+1))
+
+        burned_number = 0
+        for i in range(number_of_nodes):
+            if burned[i]:
+                burned_number += 1
+        burned_number -= len(self.fire_starts)
+
+        return (burned_number,round_count, fire_steps)
     
     def effective_and_useless_firefighters_count(self, fireman):
         number_of_nodes = self.graph.number_of_nodes()
@@ -98,7 +164,7 @@ class FirefighterProblem:
                 if n in fireman: continue
                 if burned[n]: burn = True
                 else: not_burn = True
-            
+
             if burn and not_burn: effective_count +=1
             if not_burn and not burn: useless_count += 1
         return (effective_count, useless_count)
