@@ -10,3 +10,4 @@ p9 - circular ladder graph - dużo wierzchołków (np. 2000), 4 strażaków, po�
 p10 - drzewo 4-arne, wysokoć 6, (n=5460) 
 p11 - barbell_graph (n = 3100) wynik >= 1600
 p12 - turan graph (25,5)
+p13 - grid graph (10,10,10)
