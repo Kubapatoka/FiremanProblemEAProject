@@ -15,8 +15,8 @@ def copy_and_modify_notebook(original_notebook, new_notebook, original_instance,
     def sub(line):
         subed = pattern.sub(f"problems/{new_instance}", line)
         if subed != line:
-            print("<", line)
-            print(">", subed)
+            print("<", line.rstrip("\n"))
+            print(">", subed.rstrip("\n"))
         return subed
 
     # Modify the notebook content
@@ -30,10 +30,11 @@ def copy_and_modify_notebook(original_notebook, new_notebook, original_instance,
 
 
 # Directories
+notebooks_dir = "./MTGA-Notebooks"
 problems_dir = "./problems"
 
 # Original notebook
-original_notebook = "MTGANotebook-p1.ipynb"
+original_notebook = os.path.join(notebooks_dir, "MTGANotebook-p1.ipynb")
 
 # Scan the problems directory for JSON files
 for filename in os.listdir(problems_dir):
@@ -42,7 +43,7 @@ for filename in os.listdir(problems_dir):
         if instance_name == "p1":
             continue
 
-        new_notebook = f"MTGANotebook-{instance_name}.ipynb"
+        new_notebook = os.path.join(notebooks_dir, f"MTGANotebook-{instance_name}.ipynb")
         copy_and_modify_notebook(original_notebook, new_notebook, "p1", instance_name)
 
 print("Notebooks copied and modified successfully.")
