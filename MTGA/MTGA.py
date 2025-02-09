@@ -27,7 +27,7 @@ class MTGA:
             float(instance.size - instance.problem.num_teams) / instance.size,
         )
 
-        self.local_step_size = kwargs.get("local_step_size", 0.5)
+        self.local_step_size = kwargs.get("local_step_size", 0.05)
 
         self.global_step_size = kwargs.get("global_step_size", 0.05)
         self.global_susceptibility_radius_factor = kwargs.get(
@@ -125,14 +125,14 @@ class MTGA:
             linewidth=1000, precision=4, formatter={"float": print_float}
         )
         self.output_file.write(
-            f"======================== Tribe {idx} ========================"
+            f"======================== Tribe {idx} ========================\n"
         )
         max_len = max([8] + [len(name) for name, _ in args])
         for name, arg in args:
-            self.output_file.write(f"{name.ljust(max_len)}: {arg}")
+            self.output_file.write(f"{name.ljust(max_len)}: {arg}\n")
 
-        self.output_file.write(f"{"feedback".ljust(max_len)}: {feedback}")
-        self.output_file.write(f"{"gene".ljust(max_len)}: {gene}")
+        self.output_file.write(f"{"feedback".ljust(max_len)}: {feedback}\n")
+        self.output_file.write(f"{"gene".ljust(max_len)}: {gene}\n")
         # numpy_reset_default_prints()
 
     def calculate_density_factor(self, genes):
@@ -156,7 +156,7 @@ class MTGA:
             delta_sum = delta.sum(axis=0)
             local_feedback[i, :] = delta_sum * rho[i] * self.local_step_size
             # if self.print_weights:
-            self.output_file.write("\nLocal Weights")
+            self.output_file.write("\nLocal Weights\n")
             self.print_aligned(
                 genes[i, :],
                 i,
@@ -182,7 +182,7 @@ class MTGA:
             inverse_weights * (weighted_mean - genes) * self.global_step_size
         )
         # if self.print_weights:
-        self.output_file.write("\nGlobal Weights")
+        self.output_file.write("\nGlobal Weights\n")
         for i in range(self.tribe_num):
             self.print_aligned(
                 genes[i, :],
@@ -228,6 +228,13 @@ class MTGA:
         new_genes = genes + feedback * multiplier
         return new_genes
 
+    def calculate_gene_mutation(self, genes, it):
+        mutation_changes = np.zeros(genes.shape)
+        if it % self.gene_mutation_frequency:
+            mutation_changes, samples = self.instance.mutate_genes(genes)
+            mutation_changes[(samples > self.gene_mutation_probability)] = 0
+        return mutation_changes
+
     def judge_population(self, genes, population, objective_value, weights_array, it):
         self.check_shapes(genes, population, objective_value, weights_array)
         if self.print_weights:
@@ -243,10 +250,7 @@ class MTGA:
         )
         # gene_values = self.eval_gene(objective_value, weights_array)
         # global_feedback = self.calculate_global_feedback(genes, rho, K, gene_values)
-
-        mutation_changes = np.zeros(genes.shape)
-        if it % self.gene_mutation_frequency:
-            mutation_changes = self.instance.mutate_genes(genes)
+        mutation_changes = self.calculate_gene_mutation(genes, it)
 
         new_genes = self.correction_function(genes, local_feedback + mutation_changes)
         return new_genes
@@ -293,9 +297,12 @@ class MTGA:
 
     def reset_output_file(self, iteration):
         self.output_file.close()
-        self.output_file = open(
-            self.weights_output_filename.format(iteration=iteration), "w"
-        )
+        try:
+            self.output_file = open(
+                self.weights_output_filename.format(iteration=iteration), "w"
+            )
+        except FileNotFoundError:
+            self.output_file = open("/dev/null", "w")
 
 
 def optimize(instance: Instance, **kwargs):

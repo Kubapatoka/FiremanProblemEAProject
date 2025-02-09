@@ -7,13 +7,13 @@ class BetaMean:
     def __init__(self, std_dev=0.2):
         self.std_dev = std_dev
 
-    def __call__(self, problem: FirefighterProblem, shape):
+    def __call__(self, problem: FirefighterProblem, genes):
         mean = problem.num_teams / len(problem.graph)
         variance = self.std_dev**2
         alpha = max(((1 - mean) / variance - 1 / mean) * mean**2, 1e-6)
         beta_param = max(alpha * (1 / mean - 1), 1e-6)  # Ensure beta > 0
 
-        samples = stats.beta.rvs(alpha, beta_param, size=shape)
+        samples = stats.beta.rvs(alpha, beta_param, size=genes.shape)
         return samples
 
 
@@ -24,15 +24,14 @@ class TruncatedNormal:
         self.scale = scale
         self.loc = loc
 
-    def __call__(self, shape):
+    def __call__(self, problem, genes):
         return stats.truncnorm.rvs(
-            self.a, self.b, loc=self.loc, scale=self.scale, size=shape
+            self.a, self.b, loc=self.loc, scale=self.scale, size=genes.shape
         )
 
 
 class Normal:
-    def __init__(self, mutation_probability=0.5, sigma=0.01, mean=0.0):
-        self.mut_prob = mutation_probability
+    def __init__(self, sigma=0.02, mean=0.0):
         self.sigma = sigma
         self.mean = mean
 
@@ -40,5 +39,4 @@ class Normal:
         tribe_num, chromosome_len = genes.shape
         changes = np.random.normal(self.mean, self.sigma, genes.shape)
         samples = np.random.random(tribe_num)
-        changes[(samples > self.mut_prob)] = 0
-        return changes
+        return changes, samples

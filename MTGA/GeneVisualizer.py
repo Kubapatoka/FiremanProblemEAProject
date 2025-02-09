@@ -54,15 +54,17 @@ class GeneEvolutionRenderer:
                 ax.set_ylabel(f"Value: {evaluation:.2f}")
                 ax.set_xticks(range(num_chromosomes))
 
-        anim = FuncAnimation(
+        ani = FuncAnimation(
             fig, update, frames=len(collected_data), interval=self.interval, blit=False
         )
 
-        progress_bar.close()
         output_path = kwargs.get("output_path", None)
         if output_path is None:
-            return HTML(anim.to_jshtml())
+            html = HTML(ani.to_jshtml())
+            progress_bar.close()
+            return html
         else:
-            anim.save(output_path, writer=PillowWriter(fps=self.fps))
+            ani.save(output_path, writer=PillowWriter(fps=self.fps))
             plt.close(fig)
+            progress_bar.close()
             print(f"GIF saved to {output_path}")
