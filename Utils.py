@@ -196,21 +196,6 @@ def print_sorted_parameters(file, values, *args):
 
     print_parameters(file, sorted_values, *sorted_args)
 
-
-def correct_solutions(instance, evaluator=None):
-    def eval(arr):
-        if evaluator is None:
-            return arr
-        else:
-            return evaluator(instance.problem, arr)
-
-    solutions = [
-        (np.where(bool_array)[0].tolist(), eval(bool_array))
-        for bool_array, _ in instance.solutions
-    ]
-    return solutions
-
-
 def numpy_reset_default_prints():
     np.set_printoptions(
         edgeitems=3,
@@ -223,38 +208,3 @@ def numpy_reset_default_prints():
         formatter=None,
     )
 
-
-def draw_graph(graph, fire_starts, **kwargs):
-    node_colors = kwargs.get(
-        "node_colors",
-        {
-            "guarded": "blue",
-            "burned": "brown",
-            "on_fire": "red",
-            "starting": "yellow",
-            "default": "green",
-        },
-    )
-    teams = kwargs.get("teams", [])
-    colors = []
-
-    # Initialize attributes
-    for node in graph.nodes:
-        if node in fire_starts:
-            colors.append(node_colors["starting"])
-        elif node in teams:
-            colors.append(node_colors["guarded"])
-        else:
-            colors.append(node_colors["default"])
-
-    node_size = kwargs.get("node_size", 800)
-    font_size = kwargs.get("font_size", 10)
-    pos = nx.spring_layout(graph)
-    nx.draw(
-        graph,
-        pos=pos,
-        with_labels=True,
-        node_color=colors,
-        node_size=node_size,
-        font_size=font_size,
-    )

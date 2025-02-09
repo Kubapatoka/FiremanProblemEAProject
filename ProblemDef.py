@@ -33,7 +33,7 @@ class FirefighterProblem:
         fireman_placements,
         **kwargs,
     ):
-        return displayer.simulate_fire(
+        return displayer.simulate_multiple_fireman_scenarios(
             self.graph, self.fire_starts, fireman_placements, **kwargs
         )
 

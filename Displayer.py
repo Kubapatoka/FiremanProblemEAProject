@@ -109,11 +109,13 @@ class Displayer:
 
         ani = FuncAnimation(fig, update, frames=len(frames))
 
-        progress_bar.close()
         if output_path is None:
-            return HTML(ani.to_jshtml())
+            html =  HTML(ani.to_jshtml())
+            progress_bar.close()
+            return html
         else:
             ani.save(output_path, writer=PillowWriter(fps=self.fps))
+            progress_bar.close()
 
     def _simulate_fire_lite(self, graph: nx.Graph, output_path):
         # Compute layout once
@@ -163,11 +165,13 @@ class Displayer:
 
         ani = FuncAnimation(fig, update, frames=len(frames))
 
-        progress_bar.close()
         if output_path is None:
-            return HTML(ani.to_jshtml())
+            html =  HTML(ani.to_jshtml())
+            progress_bar.close()
+            return html
         else:
             ani.save(output_path, writer=PillowWriter(fps=self.fps))
+            progress_bar.close()
 
     def simulate_fire(
         self,
@@ -217,15 +221,19 @@ class Displayer:
         **kwargs,
     ):
         pos = nx.spring_layout(graph, seed=42)
-        frames = []
         fig, ax = plt.subplots()
 
-        print("AAAAaa")
+        total_frames = len(firefighter_placements)
+        progress_bar = tqdm(
+            total=total_frames,
+            desc="Rendering Frames",
+            unit="frame",
+            leave=False,
+        )
 
-        for fireman in tqdm(
-            firefighter_placements, desc="Generating Scenarios", leave=False
-        ):
-            print("fireman placement:", fireman)
+        def update(idx):
+            fireman, _ = firefighter_placements[idx]
+            progress_bar.update(1)
             graph_copy = copy.deepcopy(graph)
             for node in graph_copy.nodes:
                 graph_copy.nodes[node]["guarded"] = node in fireman
@@ -241,29 +249,18 @@ class Displayer:
             fig.canvas.draw()
             frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             frame = frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-            frames.append(frame)
 
-        for _ in range(self.frames_after_fire_done):
-            frames.append(frames[-1])
+            return ax.imshow(frame)
 
-        progress_bar = tqdm(
-            total=len(frames),
-            desc="Rendering Frames",
-            unit="frame",
-            leave=False,
-        )
+        ani = FuncAnimation(fig, update, frames=total_frames)
 
-        def update(frame):
-            progress_bar.update(1)
-            return ax.imshow(frames[frame])
-
-        ani = FuncAnimation(fig, update, frames=len(frames))
-
-        progress_bar.close()
         output_path = kwargs.get("output_path", None)
         if output_path is None:
-            return HTML(ani.to_jshtml())
+            html = HTML(ani.to_jshtml())
+            progress_bar.close()
+            return html
         else:
             ani.save(output_path, writer=PillowWriter(fps=self.fps))
             plt.close(fig)
+            progress_bar.close()
             print(f"GIF saved to {output_path}")

@@ -15,7 +15,7 @@ from Utils import *
 
 
 instance = Instance(
-    "problems/p1.json",
+    "problems/p5.json",
     evaluator=Evaluators.CummulativeEvaluator(),
     mutator=Mutators.WalkMutator(),
     generator=Generators.TruncatedNormal(),
@@ -24,10 +24,14 @@ instance = Instance(
     gene_mutator=GeneMutators.Normal(),
 )
 
-data = optimize_and_collect(
-    instance, number_of_iterations=7, tribe_number=3, tribe_population=20
-)
+data = optimize_and_collect(instance)
+
+evaluator = Evaluators.MainEvaluator()
+solutions = correct_solutions(instance, evaluator=evaluator)
+
 # data = optimize(instance)
+dis = Displayer()
+instance.problem.visualize_fires(dis, solutions)
 
 # vis = GeneEvolutionRenderer(independent_ylim=False)
 # vis.visualize(data,
