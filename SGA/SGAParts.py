@@ -239,7 +239,6 @@ def fireStepsEvaluator(genotype :list[bool], problem : FirefighterProblem):
     (burned,round_count, fire_steps) = problem.count_burned_verts_and_fire_motion(fireman)
     (effective_count, useless_count) = problem.effective_and_useless_firefighters_count(fireman)
 
-    #TODO sth with fire_steps
     burned_until = []
     percentGrowth = []
     
