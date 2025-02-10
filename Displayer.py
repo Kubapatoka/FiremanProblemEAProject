@@ -184,7 +184,7 @@ class Displayer:
             ani.save(output_path, writer=PillowWriter(fps=self.fps))
             progress_bar.close()
 
-    def _simulate_fire_incremental(self, graph, fire_starts, num_teams, firefighter_placement, **kwargs):
+    def simulate_fire_incremental(self, graph, fire_starts, num_teams, firefighter_placement, **kwargs):
         # Deep copy the graph to avoid modifying the original
         graph_copy = copy.deepcopy(graph)
 
@@ -203,6 +203,7 @@ class Displayer:
         fig, ax = plt.subplots()
 
         # Simulation loop
+        it = 0
         while True:
             ax.clear()
             self._draw_graph(graph, pos)
@@ -216,14 +217,19 @@ class Displayer:
             if not self._is_fire_active(graph):
                 break
 
-            nodes_to_delete = []
-            for node in graph.nodes:
-                if graph.nodes[node]["burned"] == True:
-                    nodes_to_delete.append(node)
+            if kwargs.get('delete_burned', False):
+                nodes_to_delete = []
+                for node in graph.nodes:
+                    if graph.nodes[node]["burned"] == True:
+                        nodes_to_delete.append(node)
 
-            for node in nodes_to_delete:
-                graph.remove_node(node)
-            self._update_fire_state(graph)
+                for node in nodes_to_delete:
+                    graph.remove_node(node)
+
+            if it % 2 == 0:
+                self._update_fire_state(graph)
+            else:
+                self._place_firegfighters_incremental(graph, firefighter_placement, num_teams)
 
         # Add a few frames of the final state
         for _ in range(self.frames_after_fire_done):
@@ -290,25 +296,6 @@ class Displayer:
         output_path = kwargs.get("output_path", None)
         return self._simulate_fire_lite(graph_copy, output_path)
 
-    def simulate_fire_incremental(
-        self,
-        graph,
-        fire_starts,
-        firefighter_placement,
-        **kwargs,
-    ):
-        # Deep copy the graph to avoid modifying the original
-        graph_copy = copy.deepcopy(graph)
-
-        # Initialize attributes
-        for node in graph_copy.nodes:
-            graph_copy.nodes[node]["guarded"] = node in firefighter_placement
-            graph_copy.nodes[node]["burned"] = False
-            graph_copy.nodes[node]["on_fire"] = node in fire_starts
-            graph_copy.nodes[node]["starting"] = node in fire_starts
-
-        output_path = kwargs.get("output_path", None)
-        return self._simulate_fire(graph_copy, output_path)
 
     def simulate_multiple_fireman_scenarios(
         self,
