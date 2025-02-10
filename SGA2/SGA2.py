@@ -1,6 +1,6 @@
-import ProblemDef
+import ProblemDef2
 
-def SGA(instance):
+def SGA2(instance):
     population = instance.InitialPopulation()
     # population is a sorted list of pairs: (genotype, fitness_value)
 
