@@ -22,6 +22,10 @@ class Displayer:
         self.frames_after_fire_done = kwargs.get("frames_after_fire_done", 3)
         self.fps = kwargs.get("fps", 0.3)
 
+    def _pick_k(self, perm, k, unavailable):
+        valid = [i for i in range(len(perm)) if perm[i] not in unavailable]
+        return perm[valid[:k]]
+
     def _update_fire_state(self, graph: nx.Graph):
         new_on_fire = []
         for node in graph.nodes:
@@ -41,6 +45,13 @@ class Displayer:
         # Set new nodes on fire
         for node in new_on_fire:
             graph.nodes[node]["on_fire"] = True
+
+    def _place_firegfighters_incremental(self, graph: nx.Graph, priority, num_teams):
+        valid = [
+            i for i in graph.nodes if graph.nodes[i]["on_fire"] or graph.nodes[i]["burned"] or graph.nodes[i]["guarded"]
+        ]
+        for node in priority[valid[:num_teams]]:
+            graph.nodes[node]["guarded"] = True
 
     def _is_fire_active(self, graph: nx.Graph):
         return any(graph.nodes[node]["on_fire"] for node in graph.nodes)
@@ -110,7 +121,7 @@ class Displayer:
         ani = FuncAnimation(fig, update, frames=len(frames))
 
         if output_path is None:
-            html =  HTML(ani.to_jshtml())
+            html = HTML(ani.to_jshtml())
             progress_bar.close()
             return html
         else:
@@ -166,7 +177,73 @@ class Displayer:
         ani = FuncAnimation(fig, update, frames=len(frames))
 
         if output_path is None:
-            html =  HTML(ani.to_jshtml())
+            html = HTML(ani.to_jshtml())
+            progress_bar.close()
+            return html
+        else:
+            ani.save(output_path, writer=PillowWriter(fps=self.fps))
+            progress_bar.close()
+
+    def _simulate_fire_incremental(self, graph, fire_starts, num_teams, firefighter_placement, **kwargs):
+        # Deep copy the graph to avoid modifying the original
+        graph_copy = copy.deepcopy(graph)
+
+        # Initialize attributes
+        for node in graph_copy.nodes:
+            graph_copy.nodes[node]["burned"] = False
+            graph_copy.nodes[node]["on_fire"] = node in fire_starts
+            graph_copy.nodes[node]["starting"] = node in fire_starts
+        self._place_firegfighters_incremental(graph, firefighter_placement, num_teams)
+
+        # Compute layout once
+        pos = nx.spring_layout(graph)
+
+        # Initialize the GIF frames
+        frames = []
+        fig, ax = plt.subplots()
+
+        # Simulation loop
+        while True:
+            ax.clear()
+            self._draw_graph(graph, pos)
+
+            # Capture frame
+            fig.canvas.draw()
+            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            frame = frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            frames.append(frame)
+
+            if not self._is_fire_active(graph):
+                break
+
+            nodes_to_delete = []
+            for node in graph.nodes:
+                if graph.nodes[node]["burned"] == True:
+                    nodes_to_delete.append(node)
+
+            for node in nodes_to_delete:
+                graph.remove_node(node)
+            self._update_fire_state(graph)
+
+        # Add a few frames of the final state
+        for _ in range(self.frames_after_fire_done):
+            frames.append(frames[-1])
+
+        progress_bar = tqdm(
+            total=len(frames),
+            desc="Rendering Frames",
+            unit="frame",
+            leave=False,
+        )
+
+        def update(frame):
+            progress_bar.update(1)
+            return ax.imshow(frames[frame])
+
+        ani = FuncAnimation(fig, update, frames=len(frames))
+
+        if output_path is None:
+            html = HTML(ani.to_jshtml())
             progress_bar.close()
             return html
         else:
@@ -212,6 +289,26 @@ class Displayer:
 
         output_path = kwargs.get("output_path", None)
         return self._simulate_fire_lite(graph_copy, output_path)
+
+    def simulate_fire_incremental(
+        self,
+        graph,
+        fire_starts,
+        firefighter_placement,
+        **kwargs,
+    ):
+        # Deep copy the graph to avoid modifying the original
+        graph_copy = copy.deepcopy(graph)
+
+        # Initialize attributes
+        for node in graph_copy.nodes:
+            graph_copy.nodes[node]["guarded"] = node in firefighter_placement
+            graph_copy.nodes[node]["burned"] = False
+            graph_copy.nodes[node]["on_fire"] = node in fire_starts
+            graph_copy.nodes[node]["starting"] = node in fire_starts
+
+        output_path = kwargs.get("output_path", None)
+        return self._simulate_fire(graph_copy, output_path)
 
     def simulate_multiple_fireman_scenarios(
         self,
