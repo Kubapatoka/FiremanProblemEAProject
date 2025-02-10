@@ -5,7 +5,9 @@ from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.special import rel_entr
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltcolors
+import pickle
 
+import random
 import copy
 from datetime import datetime
 
@@ -208,3 +210,16 @@ def numpy_reset_default_prints():
         formatter=None,
     )
 
+def save_randomness_kernel():
+    numpy_state = np.random.get_state()
+    python_state = random.getstate()
+
+    with open("rng_states.pkl", "wb") as f:
+        pickle.dump({"numpy": numpy_state, "python": python_state}, f)
+
+def restore_randomness_kernel():
+    with open("rng_states.pkl", "rb") as f:
+        states = pickle.load(f)
+
+        np.random.set_state(states["numpy"])
+        random.setstate(states["python"])
