@@ -57,4 +57,4 @@ class IncrementalFirefighterProblem:
         graph = nx.node_link_graph(data["graph"])  # Odtworzenie grafu z danych JSON
         fire_starts = data["fire_starts"]
         num_teams = data["num_teams"]
-        return cls(graph, fire_starts, num_teams)
+        return cls(graph, fire_starts, len(fire_starts), len(fire_starts))

@@ -4,7 +4,7 @@ import numpy as np
 from Utils import *
 
 class SGA2Instance:
-    def __init__(self, file_name, populationInitializer, populationSize, generationsNumber, parentsSelector, crossover, mutator, fixer, mutationProb, evaluator):
+    def __init__(self, file_name, populationInitializer, populationSize, generationsNumber, parentsSelector, crossover, mutator, mutationProb, evaluator):
         self.problem: IncrementalFirefighterProblem = IncrementalFirefighterProblem.load_from_file(file_name)
         self._populationInitializer = populationInitializer
         self._populationSize = populationSize
@@ -16,7 +16,6 @@ class SGA2Instance:
         self._crossover = crossover
         self._mutationProb = mutationProb
         self._mutator   = mutator
-        self._fixer   = fixer
         self.best_solution = None
         self._evaluator = evaluator
 
@@ -24,14 +23,14 @@ class SGA2Instance:
         rv = []
         for c in candidates:
             if np.random.random() < self._mutationProb:
-                rv.append(self._mutator(c, self.problem))
+                rv.append(self._mutator(c))
             else:
                 rv.append(c)
         return rv
 
 
     def Crossover(self, parents: tuple[list[int], list[int]]):
-        cand = self._crossover(parents[0], parents[1], self.problem)
+        cand = self._crossover(parents[0], parents[1])
         return tuple([cand[0], cand[1]])
 
 
@@ -60,7 +59,7 @@ class SGA2Instance:
 
 
     def InitialPopulation(self):
-        new_population =  self._populationInitializer(self._populationSize, self._chromosomeLength, self.problem, self._evaluator)
+        new_population =  self._populationInitializer(self._populationSize, self.problem, self._evaluator)
         new_population.sort(key=lambda v: v[1])
 
         # for p in new_population:
@@ -76,7 +75,8 @@ class SGA2Instance:
 
         fireman = population[0][0]
 
-        ev = IncrementalMainEvaluator(self.problem, fireman)
+        inc =IncrementalMainEvaluator()
+        ev = inc(self.problem, fireman)
         print(ev)
 
         print(fireman)

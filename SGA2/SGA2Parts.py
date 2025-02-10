@@ -7,7 +7,6 @@ from Evaluators import *
 
 # populationInitializer
 def basicPI(populationSize : int, problem : IncrementalFirefighterProblem, evaluator):
-    N = problem.num_teams
     chromosomeSize = problem.graph.number_of_nodes()
 
     newPopulation = []
@@ -217,5 +216,5 @@ def basicEvaluator(genotype :list[bool], problem : IncrementalFirefighterProblem
     return inc(problem, genotype)
 
 cumm = IncrementalCummulativeEvaluator()
-def CummulativeEvaluator(genotype :list[bool], problem : IncrementalFirefighterProblem):
+def cummulativeEvaluator(genotype :list[bool], problem : IncrementalFirefighterProblem):
     return cumm(problem, genotype)
