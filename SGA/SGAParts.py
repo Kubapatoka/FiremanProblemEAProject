@@ -180,7 +180,7 @@ def neighbourMutator(genotype : list[bool], problem : FirefighterProblem):
     return fenotypeToGenotype(firemans, chromosomeSize)
 
 def mixedMutator(genotype : list[bool], problem : FirefighterProblem):
-    if random.random(0,100) > 50:
+    if random.randint(0,100) > 50:
         return neighbourMutator(genotype, problem)
     return basicMutator(genotype, problem)
 

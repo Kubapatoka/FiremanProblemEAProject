@@ -42,10 +42,11 @@ class FirefighterProblem:
             self.graph, self.fire_starts, fireman, **kwargs
         )
 
-    def count_burned_verts(self, fireman):
+    def count_burned_verts(self, fireman:list[int]):
         number_of_nodes = self.graph.number_of_nodes()
         burned = np.repeat(False, number_of_nodes)
 
+        #print(fireman)
         queue = []
         for f in self.fire_starts:
             queue.append(f)
@@ -56,9 +57,9 @@ class FirefighterProblem:
             #print("burn ", first_elem)
             neighbours = self.graph.neighbors(first_elem)
             for n in neighbours:
-                if n in queue or burned[n] or n in fireman:
-                    continue
-                queue.append(n)
+                if (n not in queue) and (not burned[n]) and (n not in fireman):
+                    #print("add to queue ", n)
+                    queue.append(n)
 
         burned_number = 0
         for i in range(number_of_nodes):
