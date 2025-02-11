@@ -18,7 +18,7 @@ def save_to_file(graph, fire_starts, num_teams, file_path):
 def main():
     G = nx.grid_graph((10,10,10))
 
-    F = random.randint(0,500)
+    F = [random.randint(0,500)]
     num_teams = 5
     print("Problem generated. Writing to 'p13.json'")
     save_to_file(G, F, num_teams, "problems/p13.json")

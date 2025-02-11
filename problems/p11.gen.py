@@ -16,9 +16,9 @@ def save_to_file(graph, fire_starts, num_teams, file_path):
         json.dump(data, f)
 
 def main():
-    G = nx.barbell_graph(1500, 100)
+    G = nx.barbell_graph(500, 100)
 
-    F = random.randint(0,1500)
+    F = [random.randint(0,500)]
     num_teams = 1
     print("Problem generated. Writing to 'p11.json'")
     save_to_file(G, F, num_teams, "problems/p11.json")

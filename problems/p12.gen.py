@@ -18,7 +18,7 @@ def save_to_file(graph, fire_starts, num_teams, file_path):
 def main():
     G = nx.turan_graph(25,5)
 
-    F = random.randint(0,5)
+    F = [random.randint(0,5)]
     num_teams = 10
     print("Problem generated. Writing to 'p12.json'")
     save_to_file(G, F, num_teams, "problems/p12.json")
