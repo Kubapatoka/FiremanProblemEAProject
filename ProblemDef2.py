@@ -27,8 +27,7 @@ class IncrementalFirefighterProblem:
         fireman,
         **kwargs,
     ):
-        assert False, "Not implemented yet"
-        return displayer.simulate_fire(self.graph, self.fire_starts, fireman, **kwargs)
+        return displayer.simulate_fire_incremental(self.graph, self.fire_starts, self.num_teams_start, self.num_teams_increment, fireman, **kwargs)
 
     def visualize_fires(
         self,

@@ -48,9 +48,9 @@ class Displayer:
 
     def _place_firegfighters_incremental(self, graph: nx.Graph, priority, num_teams):
         valid = [
-            i for i in graph.nodes if graph.nodes[i]["on_fire"] or graph.nodes[i]["burned"] or graph.nodes[i]["guarded"]
+            i for i in priority if not graph.nodes[i]["on_fire"] and not graph.nodes[i]["burned"]
         ]
-        for node in priority[valid[:num_teams]]:
+        for node in valid[:num_teams]:
             graph.nodes[node]["guarded"] = True
 
     def _is_fire_active(self, graph: nx.Graph):
@@ -184,19 +184,27 @@ class Displayer:
             ani.save(output_path, writer=PillowWriter(fps=self.fps))
             progress_bar.close()
 
-    def simulate_fire_incremental(self, graph, fire_starts, num_teams, firefighter_placement, **kwargs):
+    def simulate_fire_incremental(self, graph, fire_starts, num_teams_start, num_teams_increment, firefighter_placement, **kwargs):
         # Deep copy the graph to avoid modifying the original
         graph_copy = copy.deepcopy(graph)
 
         # Initialize attributes
         for node in graph_copy.nodes:
             graph_copy.nodes[node]["burned"] = False
-            graph_copy.nodes[node]["on_fire"] = node in fire_starts
+            graph_copy.nodes[node]["guarded"] = False
+            if node in fire_starts: 
+                graph_copy.nodes[node]["starting"] = True
+                graph_copy.nodes[node]["on_fire"] = True
+            else: 
+                graph_copy.nodes[node]["starting"] = False
+                graph_copy.nodes[node]["on_fire"] = False
             graph_copy.nodes[node]["starting"] = node in fire_starts
-        self._place_firegfighters_incremental(graph, firefighter_placement, num_teams)
+        
+        num_teams = num_teams_start
+        self._place_firegfighters_incremental(graph_copy, firefighter_placement, num_teams)
 
         # Compute layout once
-        pos = nx.spring_layout(graph)
+        pos = nx.spring_layout(graph_copy)
 
         # Initialize the GIF frames
         frames = []
@@ -206,7 +214,7 @@ class Displayer:
         it = 0
         while True:
             ax.clear()
-            self._draw_graph(graph, pos)
+            self._draw_graph(graph_copy, pos)
 
             # Capture frame
             fig.canvas.draw()
@@ -214,22 +222,24 @@ class Displayer:
             frame = frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             frames.append(frame)
 
-            if not self._is_fire_active(graph):
+            if not self._is_fire_active(graph_copy):
                 break
 
             if kwargs.get('delete_burned', False):
                 nodes_to_delete = []
-                for node in graph.nodes:
-                    if graph.nodes[node]["burned"] == True:
+                for node in graph_copy.nodes:
+                    if graph_copy.nodes[node]["burned"] == True:
                         nodes_to_delete.append(node)
 
                 for node in nodes_to_delete:
-                    graph.remove_node(node)
+                    graph_copy.remove_node(node)
 
             if it % 2 == 0:
-                self._update_fire_state(graph)
+                self._update_fire_state(graph_copy)
             else:
-                self._place_firegfighters_incremental(graph, firefighter_placement, num_teams)
+                num_teams += num_teams_increment
+                self._place_firegfighters_incremental(graph_copy, firefighter_placement, num_teams)
+            it+=1
 
         # Add a few frames of the final state
         for _ in range(self.frames_after_fire_done):
@@ -248,6 +258,7 @@ class Displayer:
 
         ani = FuncAnimation(fig, update, frames=len(frames))
 
+        output_path = kwargs.get("output_path", None)
         if output_path is None:
             html = HTML(ani.to_jshtml())
             progress_bar.close()

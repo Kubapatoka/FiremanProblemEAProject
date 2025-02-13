@@ -40,9 +40,11 @@ class CummulativeEvaluator(BaseEvaluator):
         return value
 
 class BaseIncrementalEvaluator(BaseEvaluator):
-    def pick_k(self, perm, k, unavailable):
-        valid = [i for i in range(len(perm)) if perm[i] not in unavailable]
-        return perm[valid[:k]]
+    def pick_k(self, perm : list[int], k, unavailable):
+        # valid = [i for i in range(len(perm)) if perm[i] not in unavailable]
+        # return perm[valid[:k]]
+        return list(filter(lambda x: x not in unavailable, perm))[:k]
+        
 
 class IncrementalMainEvaluator(BaseIncrementalEvaluator):
     def __call__(self, problem: IncrementalFirefighterProblem, fireman):
